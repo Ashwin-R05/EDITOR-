@@ -18,6 +18,13 @@ import {
   rejectSubmission,
   addSubmissionRemark,
 } from '../controllers/submissionController';
+import {
+  getAdminSecurityIncidents,
+  getAdminSecurityIncidentDetail,
+  acceptIncident,
+  declineIncident,
+  getAdminSecurityStats,
+} from '../controllers/securityController';
 
 const router = Router();
 
@@ -42,6 +49,13 @@ router.get('/submissions/:id', getAdminSubmissionDetail);
 router.post('/submissions/:id/validate', validateSubmission);
 router.post('/submissions/:id/reject', rejectSubmission);
 router.post('/submissions/:id/remarks', addSubmissionRemark);
+
+// Security Incident Management
+router.get('/security/incidents', getAdminSecurityIncidents);
+router.get('/security/incidents/:id', getAdminSecurityIncidentDetail);
+router.post('/security/incidents/:id/accept', acceptIncident);
+router.post('/security/incidents/:id/decline', declineIncident);
+router.get('/security/stats', getAdminSecurityStats);
 
 // Leaderboard & Audit
 router.get('/leaderboard', getLeaderboard);

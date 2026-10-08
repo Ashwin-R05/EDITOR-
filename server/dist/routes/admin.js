@@ -4,6 +4,7 @@ const express_1 = require("express");
 const auth_1 = require("../middleware/auth");
 const adminController_1 = require("../controllers/adminController");
 const submissionController_1 = require("../controllers/submissionController");
+const securityController_1 = require("../controllers/securityController");
 const router = (0, express_1.Router)();
 router.use(auth_1.requireAuth, auth_1.requireAdmin);
 // Dashboard & Stats
@@ -22,6 +23,12 @@ router.get('/submissions/:id', submissionController_1.getAdminSubmissionDetail);
 router.post('/submissions/:id/validate', submissionController_1.validateSubmission);
 router.post('/submissions/:id/reject', submissionController_1.rejectSubmission);
 router.post('/submissions/:id/remarks', submissionController_1.addSubmissionRemark);
+// Security Incident Management
+router.get('/security/incidents', securityController_1.getAdminSecurityIncidents);
+router.get('/security/incidents/:id', securityController_1.getAdminSecurityIncidentDetail);
+router.post('/security/incidents/:id/accept', securityController_1.acceptIncident);
+router.post('/security/incidents/:id/decline', securityController_1.declineIncident);
+router.get('/security/stats', securityController_1.getAdminSecurityStats);
 // Leaderboard & Audit
 router.get('/leaderboard', adminController_1.getLeaderboard);
 router.get('/audit-logs', adminController_1.getAuditLogs);

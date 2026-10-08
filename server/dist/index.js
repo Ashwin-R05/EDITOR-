@@ -53,10 +53,12 @@ app.get('/api/health', (req, res) => {
         uptime: process.uptime(),
     });
 });
+const security_1 = __importDefault(require("./routes/security"));
 // API routes
 app.use('/api/auth', auth_1.default);
 app.use('/api/admin', admin_1.default);
 app.use('/api/participant', participant_1.default);
+app.use('/api/security', security_1.default);
 app.use('/api', coding_1.default);
 // 404 handler
 app.use((req, res) => {

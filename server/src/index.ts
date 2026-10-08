@@ -56,10 +56,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+import securityRoutes from './routes/security';
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/participant', participantRoutes);
+app.use('/api/security', securityRoutes);
 app.use('/api', codingRoutes);
 
 // 404 handler
