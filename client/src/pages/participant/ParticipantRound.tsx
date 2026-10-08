@@ -25,6 +25,8 @@ import Editor from '@monaco-editor/react';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import api from '../../services/api';
+import { useSecurityMonitor } from '../../hooks/useSecurityMonitor';
+import { SecurityLockOverlay } from '../../components/participant/SecurityLockOverlay';
 import {
   Round,
   Problem,
@@ -70,6 +72,23 @@ export const ParticipantRound: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submissionModal, setSubmissionModal] = useState<any | null>(null);
 
+  // Security & Anti-Cheat state
+  const [securityStatus, setSecurityStatus] = useState<'CLEAR' | 'UNDER_REVIEW' | 'DISQUALIFIED'>('CLEAR');
+  const [activeIncident, setActiveIncident] = useState<any | null>(null);
+  const [disqualifyReason, setDisqualifyReason] = useState<string | null>(null);
+
+  // Security Monitor Hook
+  const { reportViolation } = useSecurityMonitor({
+    roundId,
+    getCodeSnapshot: () => codeRef.current,
+    isEnabled: !loading && !isTimeExpired && securityStatus === 'CLEAR' && round?.status === 'ACTIVE',
+    onLockSession: (inc) => {
+      setSecurityStatus('UNDER_REVIEW');
+      setActiveIncident(inc);
+      saveDraftNow('security_incident');
+    },
+  });
+
   // 1. Initial Data Fetch & Verification
   const fetchRoundData = useCallback(async () => {
     if (!roundId) return;
@@ -107,6 +126,22 @@ export const ParticipantRound: React.FC = () => {
         }
       } catch (dErr) {
         if (p?.starter_code) setCode(p.starter_code);
+      }
+      // Check Participant Security Status
+      try {
+        const secRes = await api.get('/security/status');
+        if (secRes.data) {
+          if (secRes.data.isDisqualified) {
+            setSecurityStatus('DISQUALIFIED');
+          } else if (secRes.data.isUnderReview) {
+            setSecurityStatus('UNDER_REVIEW');
+            setActiveIncident(secRes.data.activeIncident);
+          } else {
+            setSecurityStatus('CLEAR');
+          }
+        }
+      } catch (secErr) {
+        // Quiet fallback
       }
     } catch (err: any) {
       console.error('Failed to enter round:', err);
@@ -163,11 +198,35 @@ export const ParticipantRound: React.FC = () => {
       fetchRoundData();
     });
 
+    socket.on('security:accepted', (data: any) => {
+      console.log('✅ Security accepted by admin:', data);
+      setSecurityStatus('CLEAR');
+      setActiveIncident(null);
+      refreshUser();
+      fetchRoundData();
+    });
+
+    socket.on('security:declined', (data: any) => {
+      console.log('❌ Security declined by admin:', data);
+      setSecurityStatus('DISQUALIFIED');
+      setDisqualifyReason(data?.reason || 'Terminated by administrator');
+      refreshUser();
+    });
+
+    socket.on('security:locked', (data: any) => {
+      console.log('🔒 Security locked:', data);
+      setSecurityStatus('UNDER_REVIEW');
+      setActiveIncident(data);
+    });
+
     return () => {
       socket.emit('leave:round', roundId);
       socket.off('round:paused');
       socket.off('round:ended');
       socket.off('security:decision');
+      socket.off('security:accepted');
+      socket.off('security:declined');
+      socket.off('security:locked');
     };
   }, [socket, roundId, fetchRoundData, refreshUser]);
 
@@ -291,7 +350,7 @@ export const ParticipantRound: React.FC = () => {
 
   // 6. SUBMIT Code Action
   const handleSubmitSolution = async () => {
-    if (!roundId || isSubmitting || isTimeExpired) return;
+    if (!roundId || isSubmitting || isTimeExpired || securityStatus !== 'CLEAR') return;
 
     const confirmSubmit = window.confirm(
       'Are you sure you want to SUBMIT this solution? An immutable snapshot will be created and evaluated against all public and hidden test cases.'
@@ -366,10 +425,19 @@ export const ParticipantRound: React.FC = () => {
 
   const maxRuns = round?.run_limit || 5;
   const runsRemaining = Math.max(0, maxRuns - runCount);
-  const isRunDisabled = isRunning || runsRemaining === 0 || isTimeExpired;
+  const isRunDisabled = isRunning || runsRemaining === 0 || isTimeExpired || securityStatus !== 'CLEAR';
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-62px)] overflow-hidden bg-[#070b14] relative">
+      {/* Security Review / Disqualification Overlay */}
+      {(securityStatus === 'UNDER_REVIEW' || securityStatus === 'DISQUALIFIED') && (
+        <SecurityLockOverlay
+          status={securityStatus}
+          incident={activeIncident}
+          reason={disqualifyReason || undefined}
+          onRefreshStatus={fetchRoundData}
+        />
+      )}
       {/* Time Expired Banner */}
       {isTimeExpired && (
         <div className="bg-red-950/90 border-b border-red-500/50 px-6 py-2 text-center text-xs font-mono text-red-200 flex items-center justify-center gap-2 z-50">
@@ -447,8 +515,16 @@ export const ParticipantRound: React.FC = () => {
           <div className="h-4 w-[1px] bg-slate-800" />
 
           {/* Security Status */}
-          <span className="badge badge-active text-[10px]">
-            SECURE ARENA ACTIVE
+          <span
+            className={`badge text-[10px] ${
+              securityStatus === 'CLEAR'
+                ? 'badge-active'
+                : securityStatus === 'UNDER_REVIEW'
+                ? 'badge-pending animate-pulse'
+                : 'badge-danger'
+            }`}
+          >
+            {securityStatus === 'CLEAR' ? 'SECURE ARENA ACTIVE' : securityStatus === 'UNDER_REVIEW' ? 'LOCKED — UNDER REVIEW' : 'DISQUALIFIED'}
           </span>
         </div>
       </div>
@@ -558,11 +634,21 @@ export const ParticipantRound: React.FC = () => {
               theme="vs-dark"
               value={code}
               onChange={handleCodeChange}
-              onMount={(editor) => {
+              onMount={(editor, monaco) => {
                 editor.onDidBlurEditorText(handleEditorBlur);
+                // Intercept Monaco internal copy/paste shortcuts
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC, () => {
+                  reportViolation('COPY_ATTEMPT', 'Attempted Monaco copy shortcut: Ctrl/Cmd + C');
+                });
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, () => {
+                  reportViolation('PASTE_ATTEMPT', 'Attempted Monaco paste shortcut: Ctrl/Cmd + V');
+                });
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyX, () => {
+                  reportViolation('CUT_ATTEMPT', 'Attempted Monaco cut shortcut: Ctrl/Cmd + X');
+                });
               }}
               options={{
-                readOnly: isTimeExpired || participant?.status === 'UNDER_REVIEW' || participant?.status === 'DISQUALIFIED',
+                readOnly: isTimeExpired || securityStatus !== 'CLEAR',
                 minimap: { enabled: true, scale: 0.75 },
                 fontSize: 13,
                 fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
@@ -572,8 +658,9 @@ export const ParticipantRound: React.FC = () => {
                 tabSize: 4,
                 wordWrap: 'on',
                 bracketPairColorization: { enabled: true },
-                formatOnPaste: true,
-                formatOnType: true,
+                contextmenu: false,
+                formatOnPaste: false,
+                formatOnType: false,
               }}
             />
           </div>
