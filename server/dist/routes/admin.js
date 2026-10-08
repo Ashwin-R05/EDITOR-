@@ -5,14 +5,38 @@ const auth_1 = require("../middleware/auth");
 const adminController_1 = require("../controllers/adminController");
 const submissionController_1 = require("../controllers/submissionController");
 const securityController_1 = require("../controllers/securityController");
+const dashboardController_1 = require("../controllers/dashboardController");
 const router = (0, express_1.Router)();
 router.use(auth_1.requireAuth, auth_1.requireAdmin);
-// Dashboard & Stats
+// =============================================
+// Phase 6: Enhanced Admin Dashboard APIs
+// =============================================
+// Live Dashboard (new efficient single-query endpoint)
+router.get('/dashboard/stats', dashboardController_1.getDashboardStats);
+// Enhanced Participant List (paginated, searchable, filterable)
+router.get('/participants/live', dashboardController_1.getParticipantsList);
+// Enhanced Participant Profile  
+router.get('/participants/live/:id', dashboardController_1.getParticipantProfile);
+// Activity Feed
+router.get('/activity', dashboardController_1.getActivityFeed);
+// Notifications
+router.get('/notifications', dashboardController_1.getNotifications);
+router.post('/notifications/:id/read', dashboardController_1.markNotificationRead);
+router.post('/notifications/read-all', dashboardController_1.markAllNotificationsRead);
+// Enhanced Round Controls (with Socket.IO broadcasts + activity logging)
+router.post('/rounds/:id/start-live', dashboardController_1.startRoundControlled);
+router.post('/rounds/:id/pause-live', dashboardController_1.pauseRoundControlled);
+router.post('/rounds/:id/resume-live', dashboardController_1.resumeRoundControlled);
+router.post('/rounds/:id/end-live', dashboardController_1.endRoundControlled);
+// =============================================
+// Phase 1-5: Original routes (preserved)
+// =============================================
+// Dashboard & Stats (legacy)
 router.get('/dashboard', adminController_1.getAdminDashboard);
-// Participants
+// Participants (legacy)
 router.get('/participants', adminController_1.getParticipants);
 router.get('/participants/:id', adminController_1.getParticipantDetail);
-// Rounds Management
+// Rounds Management (legacy)
 router.get('/rounds', adminController_1.getRounds);
 router.post('/rounds/:id/start', adminController_1.startRound);
 router.post('/rounds/:id/pause', adminController_1.pauseRound);

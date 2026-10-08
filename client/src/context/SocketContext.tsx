@@ -49,9 +49,17 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setIsConnected(false);
     });
 
+    // Periodic heartbeat to track connection and online status
+    const heartbeatTimer = setInterval(() => {
+      if (socketInstance.connected) {
+        socketInstance.emit('heartbeat', { timestamp: Date.now() });
+      }
+    }, 20000);
+
     setSocket(socketInstance);
 
     return () => {
+      clearInterval(heartbeatTimer);
       socketInstance.disconnect();
     };
   }, [isAuthenticated, token]);

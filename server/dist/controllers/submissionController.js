@@ -11,6 +11,7 @@ exports.addSubmissionRemark = addSubmissionRemark;
 const db_1 = require("../models/db");
 const executionService_1 = require("../execution/executionService");
 const socketManager_1 = require("../websocket/socketManager");
+const dashboardController_1 = require("./dashboardController");
 /**
  * Create an immutable submission snapshot and evaluate against all test cases.
  * Sequential submission numbering per participant per round.
@@ -187,6 +188,25 @@ async function createSubmission(req, res) {
             executionStatus: execResult.status,
             validationStatus,
             submittedAt,
+        });
+        await (0, dashboardController_1.logActivity)({
+            activityType: 'SUBMISSION_CREATED',
+            actorId: req.user.id,
+            actorRole: 'PARTICIPANT',
+            actorName: req.user.displayName,
+            participantId: participant.id,
+            roundId,
+            targetType: 'submission',
+            targetId: submissionId,
+            summary: `Submission #${newSubmissionNumber} by ${participant.participant_id}: ${execResult.status} (${execResult.totalScore} pts)`,
+            metadata: { submissionNumber: newSubmissionNumber, score: execResult.totalScore, passed: execResult.passedTestCases, total: execResult.totalTestCases },
+        });
+        (0, socketManager_1.emitToAdmin)('activity:new', {
+            activityType: 'SUBMISSION_CREATED',
+            summary: `Submission #${newSubmissionNumber} by ${participant.participant_id}: ${execResult.status} (${execResult.totalScore} pts)`,
+            createdAt: new Date().toISOString(),
+            participantId: participant.id,
+            roundId,
         });
         // 14. Return participant response (preserve hidden test confidentiality)
         const publicResults = execResult.results
@@ -467,6 +487,21 @@ async function validateSubmission(req, res) {
             adminName: req.user.displayName,
             remark,
         });
+        await (0, dashboardController_1.logActivity)({
+            activityType: 'SUBMISSION_VALIDATED',
+            actorId: req.user.id,
+            actorRole: 'ADMIN',
+            actorName: req.user.displayName,
+            targetType: 'submission',
+            targetId: id,
+            summary: `Submission validated by ${req.user.displayName}`,
+            metadata: { remark },
+        });
+        (0, socketManager_1.emitToAdmin)('activity:new', {
+            activityType: 'SUBMISSION_VALIDATED',
+            summary: `Submission validated by ${req.user.displayName}`,
+            createdAt: new Date().toISOString(),
+        });
         res.json({
             message: 'Submission validated successfully',
             submission: updated.rows[0],
@@ -521,6 +556,21 @@ async function rejectSubmission(req, res) {
             adminId: req.user.id,
             adminName: req.user.displayName,
             reason: finalReason,
+        });
+        await (0, dashboardController_1.logActivity)({
+            activityType: 'SUBMISSION_REJECTED',
+            actorId: req.user.id,
+            actorRole: 'ADMIN',
+            actorName: req.user.displayName,
+            targetType: 'submission',
+            targetId: id,
+            summary: `Submission rejected by ${req.user.displayName}: ${finalReason}`,
+            metadata: { reason: finalReason },
+        });
+        (0, socketManager_1.emitToAdmin)('activity:new', {
+            activityType: 'SUBMISSION_REJECTED',
+            summary: `Submission rejected by ${req.user.displayName}: ${finalReason}`,
+            createdAt: new Date().toISOString(),
         });
         res.json({
             message: 'Submission rejected successfully',

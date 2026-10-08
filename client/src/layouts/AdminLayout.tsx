@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
+import { NotificationCenter } from '../components/admin/NotificationCenter';
 
 export const AdminLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -223,7 +224,20 @@ export const AdminLayout: React.FC = () => {
 
       {/* Main Administrative Viewport */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <Outlet />
+        <header className="h-14 px-8 border-b border-slate-800/80 bg-[#0a0f1d]/60 backdrop-blur-md flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5 text-xs font-mono text-slate-400">
+            <span className="text-purple-400 font-bold">TECH AUCTION</span>
+            <span>•</span>
+            <span className="text-slate-300">ADMIN CONTROL CENTER</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-1" />
+          </div>
+          <div className="flex items-center gap-3">
+            <NotificationCenter />
+          </div>
+        </header>
+        <div className="flex-1">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

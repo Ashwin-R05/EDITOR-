@@ -218,3 +218,60 @@ export interface AuthResponse {
   user: User;
   participant: Participant | null;
 }
+
+export interface ActivityFeedItem {
+  id: string;
+  activity_type: string;
+  actor_id?: string;
+  actor_role?: string;
+  actor_name?: string;
+  participant_id?: string;
+  round_id?: string;
+  session_id?: string;
+  target_type?: string;
+  target_id?: string;
+  summary: string;
+  metadata?: any;
+  created_at: string;
+}
+
+export interface AdminNotification {
+  id: string;
+  notification_type: string;
+  title: string;
+  message?: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  participant_id?: string;
+  participant_code?: string;
+  participant_name?: string;
+  round_id?: string;
+  reference_type?: string;
+  reference_id?: string;
+  metadata?: any;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface ParticipantListItem {
+  id: string;
+  participant_id: string;
+  college?: string;
+  department?: string;
+  year?: number;
+  phone?: string;
+  status: ParticipantStatus;
+  is_online: boolean;
+  last_seen?: string;
+  last_heartbeat?: string;
+  registered_at?: string;
+  display_name: string;
+  email: string;
+  active_session_status?: SessionStatus;
+  active_run_count?: number;
+  active_submission_count?: number;
+  active_round_number?: number;
+  round_name?: string;
+  total_submissions: number;
+  pending_incidents: number;
+  total_score: number;
+}

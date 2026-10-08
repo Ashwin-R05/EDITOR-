@@ -6,4 +6,5 @@ export declare function emitToAdmin(event: string, data: any): void;
 export declare function emitToUser(userId: string, event: string, data: any): void;
 export declare function emitToRound(roundId: string, event: string, data: any): void;
 export declare function emitToAll(event: string, data: any): void;
+export declare function emitAdminStatsUpdate(): Promise<void>;
 //# sourceMappingURL=socketManager.d.ts.map

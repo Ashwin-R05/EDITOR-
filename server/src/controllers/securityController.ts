@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { query } from '../models/db';
 import { AuthRequest } from '../middleware/auth';
 import { emitToAdmin, emitToUser } from '../websocket/socketManager';
+import { logActivity, createNotification } from './dashboardController';
 
 const VALID_INCIDENT_TYPES = [
   'COPY_ATTEMPT',
@@ -208,6 +209,48 @@ export async function createIncident(req: AuthRequest, res: Response): Promise<v
       incidentType,
       description: finalDescription,
       status: 'UNDER_REVIEW',
+    });
+
+    // C. Activity feed & Admin Notification
+    await logActivity({
+      activityType: 'SECURITY_INCIDENT',
+      actorId: req.user!.id,
+      actorRole: 'PARTICIPANT',
+      actorName: req.user!.displayName,
+      participantId: participant.id,
+      roundId,
+      sessionId: session.id,
+      targetType: 'security_incident',
+      targetId: incident.id,
+      summary: `Security incident detected: ${incidentType} (${severity}) - ${participant.participant_id}`,
+      metadata: { incidentCode, incidentType, severity, description: finalDescription },
+    });
+
+    await createNotification({
+      notificationType: 'SECURITY_ALERT',
+      title: `Security Alert: ${incidentType}`,
+      message: `Participant ${participant.participant_id} (${req.user!.displayName}) triggered ${incidentType}: ${finalDescription}`,
+      severity: severity === 'HIGH' ? 'CRITICAL' : 'WARNING',
+      participantId: participant.id,
+      roundId,
+      referenceType: 'security_incident',
+      referenceId: incident.id,
+      metadata: { incidentCode, incidentType, severity },
+    });
+
+    emitToAdmin('activity:new', {
+      activityType: 'SECURITY_INCIDENT',
+      summary: `Security incident detected: ${incidentType} (${severity}) - ${participant.participant_id}`,
+      createdAt: new Date().toISOString(),
+      participantId: participant.id,
+      roundId,
+    });
+
+    emitToAdmin('notification:new', {
+      title: `Security Alert: ${incidentType}`,
+      message: `Participant ${participant.participant_id} triggered ${incidentType}`,
+      severity: severity === 'HIGH' ? 'CRITICAL' : 'WARNING',
+      createdAt: new Date().toISOString(),
     });
 
     res.status(201).json({
@@ -476,6 +519,26 @@ export async function acceptIncident(req: AuthRequest, res: Response): Promise<v
       sessionStatus: 'ACTIVE',
     });
 
+    await logActivity({
+      activityType: 'INCIDENT_RESOLVED',
+      actorId: req.user!.id,
+      actorRole: 'ADMIN',
+      actorName: req.user!.displayName,
+      participantId: incident.participant_id,
+      roundId: incident.round_id,
+      sessionId: incident.session_id,
+      targetType: 'security_incident',
+      targetId: incident.id,
+      summary: `Admin accepted incident ${incident.incident_code}. Session resumed.`,
+      metadata: { decision: 'ACCEPT', remark },
+    });
+
+    emitToAdmin('activity:new', {
+      activityType: 'INCIDENT_RESOLVED',
+      summary: `Admin accepted incident ${incident.incident_code}`,
+      createdAt: new Date().toISOString(),
+    });
+
     res.json({
       message: 'Incident accepted. Participant session resumed.',
       incident,
@@ -582,6 +645,44 @@ export async function declineIncident(req: AuthRequest, res: Response): Promise<
       participantId: incident.participant_id,
       status: 'DISQUALIFIED',
       sessionStatus: 'DISQUALIFIED',
+    });
+
+    await logActivity({
+      activityType: 'PARTICIPANT_DISQUALIFIED',
+      actorId: req.user!.id,
+      actorRole: 'ADMIN',
+      actorName: req.user!.displayName,
+      participantId: incident.participant_id,
+      roundId: incident.round_id,
+      sessionId: incident.session_id,
+      targetType: 'participant',
+      targetId: incident.participant_id,
+      summary: `Admin declined incident ${incident.incident_code} and disqualified participant.`,
+      metadata: { decision: 'DECLINE', reason: finalReason },
+    });
+
+    await createNotification({
+      notificationType: 'DISQUALIFICATION',
+      title: 'Participant Disqualified',
+      message: `Participant ${incident.participant_id} was disqualified: ${finalReason}`,
+      severity: 'CRITICAL',
+      participantId: incident.participant_id,
+      roundId: incident.round_id,
+      referenceType: 'participant',
+      referenceId: incident.participant_id,
+    });
+
+    emitToAdmin('activity:new', {
+      activityType: 'PARTICIPANT_DISQUALIFIED',
+      summary: `Admin disqualified participant ${incident.participant_id}`,
+      createdAt: new Date().toISOString(),
+    });
+
+    emitToAdmin('notification:new', {
+      title: 'Participant Disqualified',
+      message: `Participant ${incident.participant_id} was disqualified`,
+      severity: 'CRITICAL',
+      createdAt: new Date().toISOString(),
     });
 
     res.json({
