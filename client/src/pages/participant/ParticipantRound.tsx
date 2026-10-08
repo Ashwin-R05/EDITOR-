@@ -259,25 +259,31 @@ export const ParticipantRound: React.FC = () => {
       });
 
       setRunResult(res.data);
-      setRunCount(res.data.runCount);
+      const updatedCount = res.data.runCount ?? res.data.runNumber ?? runCount + 1;
+      setRunCount(updatedCount);
     } catch (err: any) {
       console.error('Run failed:', err);
-      const errMsg = err.response?.data?.error || 'Execution failed. Please verify your code.';
+      const errMsg = err.response?.data?.error || err.response?.data?.message || 'Execution failed. Please verify your code.';
+      const newCount = err.response?.data?.runCount ?? err.response?.data?.runNumber ?? runCount + 1;
+      const maxR = round?.run_limit || 5;
       setRunResult({
         status: 'COMPILATION_ERROR',
         compilationError: errMsg,
-        totalTestCases: testCases.length,
-        passedTestCases: 0,
+        totalTests: testCases.length,
+        passedTests: 0,
+        executionTime: 0,
         executionTimeMs: 0,
         results: [],
-        runCount: runCount + 1,
-        maxRuns: round?.run_limit || 5,
-        remainingRuns: Math.max(0, (round?.run_limit || 5) - (runCount + 1)),
-        runLimitReached: runCount + 1 >= (round?.run_limit || 5),
+        runNumber: newCount,
+        runsRemaining: Math.max(0, maxR - newCount),
+        totalTestCases: testCases.length,
+        passedTestCases: 0,
+        runCount: newCount,
+        maxRuns: maxR,
+        remainingRuns: Math.max(0, maxR - newCount),
+        runLimitReached: newCount >= maxR,
       });
-      if (err.response?.data?.runCount) {
-        setRunCount(err.response.data.runCount);
-      }
+      setRunCount(newCount);
     } finally {
       setIsRunning(false);
     }
@@ -628,11 +634,11 @@ export const ParticipantRound: React.FC = () => {
                             <XCircle className="w-4 h-4 text-red-400" />
                           )}
                           <span className="font-bold text-slate-200">
-                            Passed {runResult.passedTestCases} / {runResult.totalTestCases} Public Test Cases
+                            Passed {runResult.passedTestCases ?? runResult.passedTests ?? 0} / {runResult.totalTestCases ?? runResult.totalTests ?? 0} Public Test Cases
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-400">
-                          Execution Time: {runResult.executionTimeMs} ms • Runs Left: {runResult.remainingRuns}
+                          Execution Time: {runResult.executionTimeMs ?? Math.round((runResult.executionTime || 0) * 1000)} ms • Runs Left: {runResult.remainingRuns ?? runResult.runsRemaining ?? 0}
                         </div>
                       </div>
 
@@ -645,38 +651,40 @@ export const ParticipantRound: React.FC = () => {
                       )}
 
                       {/* Individual Test Cases */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {runResult.results.map((tr) => (
-                          <div
-                            key={tr.testCaseId}
-                            className={`p-3 rounded-lg border text-xs ${
-                              tr.passed
-                                ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
-                                : 'bg-red-950/20 border-red-500/30 text-red-200'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between font-bold mb-1">
-                              <span>Test Case #{tr.testNumber}</span>
-                              <span>{tr.status}</span>
+                      {runResult.results && runResult.results.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {runResult.results.map((tr) => (
+                            <div
+                              key={tr.testCaseId}
+                              className={`p-3 rounded-lg border text-xs ${
+                                tr.passed
+                                  ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
+                                  : 'bg-red-950/20 border-red-500/30 text-red-200'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between font-bold mb-1">
+                                <span>Test Case #{tr.testNumber}</span>
+                                <span>{tr.status}</span>
+                              </div>
+                              {tr.input && (
+                                <div className="text-[10px] text-slate-400 truncate">
+                                  Input: <span className="text-slate-200">{tr.input}</span>
+                                </div>
+                              )}
+                              {tr.expectedOutput && (
+                                <div className="text-[10px] text-slate-400 truncate">
+                                  Expected: <span className="text-slate-200">{tr.expectedOutput}</span>
+                                </div>
+                              )}
+                              {tr.actualOutput !== undefined && (
+                                <div className="text-[10px] text-slate-400 truncate">
+                                  Output: <span className="text-slate-200">{tr.actualOutput}</span>
+                                </div>
+                              )}
                             </div>
-                            {tr.input && (
-                              <div className="text-[10px] text-slate-400 truncate">
-                                Input: <span className="text-slate-200">{tr.input}</span>
-                              </div>
-                            )}
-                            {tr.expectedOutput && (
-                              <div className="text-[10px] text-slate-400 truncate">
-                                Expected: <span className="text-slate-200">{tr.expectedOutput}</span>
-                              </div>
-                            )}
-                            {tr.actualOutput !== undefined && (
-                              <div className="text-[10px] text-slate-400 truncate">
-                                Output: <span className="text-slate-200">{tr.actualOutput}</span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-slate-500 text-center py-6">

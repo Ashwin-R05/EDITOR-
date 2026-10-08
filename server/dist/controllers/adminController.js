@@ -131,22 +131,23 @@ async function startRound(req, res) {
         }
         const now = new Date();
         const endTime = new Date(now.getTime() + r.duration_minutes * 60 * 1000);
+        let effectiveEndTime;
         if (r.status === 'NOT_STARTED') {
+            effectiveEndTime = endTime;
             await (0, db_1.query)(`UPDATE rounds SET status = 'ACTIVE', start_time = $1, end_time = $2 WHERE id = $3`, [now.toISOString(), endTime.toISOString(), id]);
         }
         else {
             // Resuming from pause
             const pausedMs = r.pause_time ? now.getTime() - new Date(r.pause_time).getTime() : 0;
             const newPausedDuration = (r.paused_duration_seconds || 0) + Math.floor(pausedMs / 1000);
-            const newEndTime = new Date(new Date(r.end_time).getTime() + pausedMs);
-            await (0, db_1.query)(`UPDATE rounds SET status = 'ACTIVE', pause_time = NULL, paused_duration_seconds = $1, end_time = $2 WHERE id = $3`, [newPausedDuration, newEndTime.toISOString(), id]);
+            effectiveEndTime = new Date(new Date(r.end_time).getTime() + pausedMs);
+            await (0, db_1.query)(`UPDATE rounds SET status = 'ACTIVE', pause_time = NULL, paused_duration_seconds = $1, end_time = $2 WHERE id = $3`, [newPausedDuration, effectiveEndTime.toISOString(), id]);
         }
-        // Create coding sessions for all participants who don't have one
         const participants = await (0, db_1.query)('SELECT id FROM participants WHERE status != $1', ['DISQUALIFIED']);
         for (const p of participants.rows) {
-            await (0, db_1.query)(`INSERT INTO coding_sessions (participant_id, round_id, status, start_time)
-         VALUES ($1, $2, 'ACTIVE', $3)
-         ON CONFLICT (participant_id, round_id) DO UPDATE SET status = 'ACTIVE', start_time = COALESCE(coding_sessions.start_time, $3)`, [p.id, id, now.toISOString()]);
+            await (0, db_1.query)(`INSERT INTO coding_sessions (participant_id, round_id, status, start_time, end_time)
+         VALUES ($1, $2, 'ACTIVE', $3, $4)
+         ON CONFLICT (participant_id, round_id) DO UPDATE SET status = 'ACTIVE', start_time = COALESCE(coding_sessions.start_time, $3), end_time = $4`, [p.id, id, now.toISOString(), effectiveEndTime.toISOString()]);
         }
         // Audit log
         await (0, db_1.query)(`INSERT INTO audit_logs (actor_id, actor_role, action, target_type, target_id, metadata)

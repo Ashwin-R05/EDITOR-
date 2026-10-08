@@ -152,6 +152,11 @@ async function getRound(req, res) {
         }
         else {
             session = sResult.rows[0];
+            if (!session.end_time) {
+                session.end_time = roundEndTime.toISOString();
+                await (0, db_1.query)('UPDATE coding_sessions SET end_time = $1, status = $2 WHERE id = $3', [session.end_time, 'ACTIVE', session.id]);
+                session.status = 'ACTIVE';
+            }
             const sessionEnd = new Date(session.end_time);
             if (now > sessionEnd && session.status !== 'COMPLETED') {
                 await (0, db_1.query)("UPDATE coding_sessions SET status = 'COMPLETED' WHERE id = $1", [session.id]);

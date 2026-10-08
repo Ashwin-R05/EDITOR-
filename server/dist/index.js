@@ -14,6 +14,7 @@ const socketManager_1 = require("./websocket/socketManager");
 const auth_1 = __importDefault(require("./routes/auth"));
 const participant_1 = __importDefault(require("./routes/participant"));
 const admin_1 = __importDefault(require("./routes/admin"));
+const coding_1 = __importDefault(require("./routes/coding"));
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
 // Security middleware
@@ -54,9 +55,9 @@ app.get('/api/health', (req, res) => {
 });
 // API routes
 app.use('/api/auth', auth_1.default);
-app.use('/api/participant', participant_1.default);
-app.use('/api', participant_1.default); // Exposes /api/code-drafts, /api/code/run, /api/submissions, etc.
 app.use('/api/admin', admin_1.default);
+app.use('/api/participant', participant_1.default);
+app.use('/api', coding_1.default);
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });

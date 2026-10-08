@@ -214,6 +214,11 @@ export async function runCode(req: AuthRequest, res: Response): Promise<void> {
       executionTimeMs: result.executionTimeMs,
       results: result.results,
       phase: result.phase,
+      // Legacy compat aliases
+      runCount: newRunCount,
+      remainingRuns: runsRemaining,
+      passedTestCases: result.passedTestCases,
+      totalTestCases: result.totalTestCases,
     });
   } catch (error) {
     console.error('RunCode error:', error);

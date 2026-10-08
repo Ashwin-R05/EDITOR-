@@ -76,15 +76,15 @@ export interface TestCaseResult {
 export interface RunExecutionResponse {
   status: ExecutionStatus;
   compilationError?: string;
-  totalTests: number;
-  passedTests: number;
-  executionTime: number;     // seconds
-  executionTimeMs: number;   // milliseconds
-  results: TestCaseResult[];
-  runNumber: number;
-  runsRemaining: number;
-  maxRuns: number;
-  runLimitReached: boolean;
+  totalTests?: number;
+  passedTests?: number;
+  executionTime?: number;     // seconds
+  executionTimeMs?: number;   // milliseconds
+  results?: TestCaseResult[];
+  runNumber?: number;
+  runsRemaining?: number;
+  maxRuns?: number;
+  runLimitReached?: boolean;
   phase?: string;
   // Legacy compat aliases
   totalTestCases?: number;

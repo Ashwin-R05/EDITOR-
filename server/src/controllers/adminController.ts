@@ -161,7 +161,9 @@ export async function startRound(req: AuthRequest, res: Response): Promise<void>
     const now = new Date();
     const endTime = new Date(now.getTime() + r.duration_minutes * 60 * 1000);
 
+    let effectiveEndTime: Date;
     if (r.status === 'NOT_STARTED') {
+      effectiveEndTime = endTime;
       await query(
         `UPDATE rounds SET status = 'ACTIVE', start_time = $1, end_time = $2 WHERE id = $3`,
         [now.toISOString(), endTime.toISOString(), id]
@@ -170,15 +172,13 @@ export async function startRound(req: AuthRequest, res: Response): Promise<void>
       // Resuming from pause
       const pausedMs = r.pause_time ? now.getTime() - new Date(r.pause_time).getTime() : 0;
       const newPausedDuration = (r.paused_duration_seconds || 0) + Math.floor(pausedMs / 1000);
-      const newEndTime = new Date(new Date(r.end_time).getTime() + pausedMs);
+      effectiveEndTime = new Date(new Date(r.end_time).getTime() + pausedMs);
 
       await query(
         `UPDATE rounds SET status = 'ACTIVE', pause_time = NULL, paused_duration_seconds = $1, end_time = $2 WHERE id = $3`,
-        [newPausedDuration, newEndTime.toISOString(), id]
+        [newPausedDuration, effectiveEndTime.toISOString(), id]
       );
     }
-
-    const effectiveEndTime = r.status === 'NOT_STARTED' ? endTime : newEndTime;
     const participants = await query('SELECT id FROM participants WHERE status != $1', ['DISQUALIFIED']);
     for (const p of participants.rows) {
       await query(
