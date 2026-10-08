@@ -9,6 +9,7 @@ import { initializeWebSocket } from './websocket/socketManager';
 import authRoutes from './routes/auth';
 import participantRoutes from './routes/participant';
 import adminRoutes from './routes/admin';
+import codingRoutes from './routes/coding';
 
 const app = express();
 const httpServer = createServer(app);
@@ -57,9 +58,9 @@ app.get('/api/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/participant', participantRoutes);
-app.use('/api', participantRoutes); // Exposes /api/code-drafts, /api/code/run, /api/submissions, etc.
 app.use('/api/admin', adminRoutes);
+app.use('/api/participant', participantRoutes);
+app.use('/api', codingRoutes);
 
 // 404 handler
 app.use((req, res) => {

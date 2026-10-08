@@ -178,14 +178,14 @@ export async function startRound(req: AuthRequest, res: Response): Promise<void>
       );
     }
 
-    // Create coding sessions for all participants who don't have one
+    const effectiveEndTime = r.status === 'NOT_STARTED' ? endTime : newEndTime;
     const participants = await query('SELECT id FROM participants WHERE status != $1', ['DISQUALIFIED']);
     for (const p of participants.rows) {
       await query(
-        `INSERT INTO coding_sessions (participant_id, round_id, status, start_time)
-         VALUES ($1, $2, 'ACTIVE', $3)
-         ON CONFLICT (participant_id, round_id) DO UPDATE SET status = 'ACTIVE', start_time = COALESCE(coding_sessions.start_time, $3)`,
-        [p.id, id, now.toISOString()]
+        `INSERT INTO coding_sessions (participant_id, round_id, status, start_time, end_time)
+         VALUES ($1, $2, 'ACTIVE', $3, $4)
+         ON CONFLICT (participant_id, round_id) DO UPDATE SET status = 'ACTIVE', start_time = COALESCE(coding_sessions.start_time, $3), end_time = $4`,
+        [p.id, id, now.toISOString(), effectiveEndTime.toISOString()]
       );
     }
 
