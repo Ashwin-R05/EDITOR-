@@ -66,15 +66,17 @@ export const ParticipantSubmissions: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 px-6 md:px-10 py-8 max-w-7xl mx-auto w-full space-y-6 select-none">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="flex-1 px-6 sm:px-10 py-8 max-w-7xl mx-auto w-full space-y-6 select-none font-sans">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Send className="w-6 h-6 text-cyan-400" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-3 font-heading">
+            <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <Send className="w-6 h-6" />
+            </div>
             <span>Immutable Submission History</span>
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">
-            Every submission creates a permanent, tamper-proof snapshot with automated test evaluations.
+          <p className="text-sm text-slate-400 font-sans mt-1">
+            Every submission creates a permanent, tamper-proof code snapshot with automated test evaluations.
           </p>
         </div>
 
@@ -84,7 +86,7 @@ export const ParticipantSubmissions: React.FC = () => {
             fetchSubmissions();
           }}
           disabled={refreshing}
-          className="btn btn-ghost text-xs font-mono self-start md:self-auto"
+          className="btn btn-ghost text-xs self-start md:self-auto"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-cyan-400' : ''}`} />
           <span>Refresh History</span>
@@ -92,17 +94,19 @@ export const ParticipantSubmissions: React.FC = () => {
       </div>
 
       {submissions.length === 0 ? (
-        <div className="glass rounded-2xl p-12 border border-slate-800 text-center space-y-3">
-          <Clock className="w-10 h-10 text-cyan-400/40 mx-auto" />
-          <h3 className="text-base font-bold text-slate-300 font-mono">
-            NO SUBMISSIONS RECORDED YET
+        <div className="card-premium p-14 text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center mx-auto">
+            <Clock className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-bold text-white font-heading">
+            No Submissions Recorded Yet
           </h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto font-mono">
-            When you enter an active competition round and click SUBMIT SOLUTION, your permanent code snapshot will appear here.
+          <p className="text-sm text-slate-400 max-w-md mx-auto font-sans leading-relaxed">
+            When you enter an active competition round and submit your solution, your permanent code snapshots will appear here in chronological order.
           </p>
         </div>
       ) : (
-        <div className="glass rounded-2xl overflow-hidden border border-slate-800">
+        <div className="card-premium overflow-hidden">
           <div className="table-container">
             <table>
               <thead>

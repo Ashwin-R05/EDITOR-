@@ -448,26 +448,26 @@ export const ParticipantRound: React.FC = () => {
       )}
 
       {/* TOP ARENA BAR */}
-      <div className="h-14 bg-[#0a0f1d] border-b border-slate-800/90 px-6 flex items-center justify-between shrink-0 select-none">
+      <div className="h-14 bg-[#0a0f1d]/95 backdrop-blur-md border-b border-cyan-500/20 px-6 flex items-center justify-between shrink-0 select-none shadow-lg shadow-cyan-950/20 relative z-30">
         <div className="flex items-center gap-4">
           <button
             onClick={() => {
               saveDraftNow('exit_click');
               navigate('/participant/dashboard');
             }}
-            className="flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-cyan-300 transition-colors px-2.5 py-1 rounded-lg hover:bg-slate-800/60"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>DASHBOARD</span>
+            <span>EXIT ARENA</span>
           </button>
 
           <div className="h-4 w-[1px] bg-slate-800" />
 
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 font-mono text-[10px] font-bold uppercase">
-              ROUND {round?.round_number}
+          <div className="flex items-center gap-2.5">
+            <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 font-mono text-[10px] font-bold tracking-wider uppercase">
+              ROUND {round?.round_number || 1}
             </span>
-            <span className="text-sm font-bold text-white tracking-wide">
+            <span className="text-sm font-bold text-white tracking-wide font-heading">
               {round?.name}
             </span>
           </div>
@@ -476,33 +476,35 @@ export const ParticipantRound: React.FC = () => {
         {/* Center: Server-Authoritative Countdown Timer */}
         <div className="flex items-center gap-3">
           <div
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border font-mono text-xs transition-all ${
+            className={`flex items-center gap-2.5 px-4 py-1.5 rounded-xl border font-mono transition-all ${
               remainingSeconds < 300
-                ? 'bg-red-950/60 border-red-500/60 text-red-300 shadow-md shadow-red-900/30 animate-pulse'
-                : 'bg-slate-900/90 border-slate-800 text-cyan-300'
+                ? 'bg-red-950/80 border-red-500/60 text-red-200 shadow-lg shadow-red-900/40 animate-pulse'
+                : 'bg-slate-900/90 border-cyan-500/30 text-cyan-300 shadow-md shadow-cyan-950/30'
             }`}
           >
-            <Clock className={`w-3.5 h-3.5 ${remainingSeconds < 300 ? 'text-red-400' : 'text-cyan-400'}`} />
-            <span className="font-bold tracking-wider text-sm">
+            <Clock className={`w-4 h-4 ${remainingSeconds < 300 ? 'text-red-400 animate-spin' : 'text-cyan-400'}`} />
+            <span className="font-extrabold tracking-widest text-base font-mono">
               {formatTime(remainingSeconds)}
             </span>
-            <span className="text-[9px] text-slate-400 uppercase">SERVER SYNC</span>
+            <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-800/80">
+              SYNC
+            </span>
           </div>
         </div>
 
         {/* Right: Autosave Status & Security Badge */}
         <div className="flex items-center gap-4 text-xs font-mono">
           {/* Autosave Pill */}
-          <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-900/60 border border-slate-800/80 text-[11px]">
             {saveStatus === 'saving' ? (
               <>
                 <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                <span className="text-cyan-300">Saving draft...</span>
+                <span className="text-cyan-300 font-medium">Syncing draft...</span>
               </>
             ) : saveStatus === 'saved' ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{lastSavedTime ? `Draft saved ${lastSavedTime}` : 'Draft saved'}</span>
+                <span className="text-slate-300">{lastSavedTime ? `Synced ${lastSavedTime}` : 'Draft Synced'}</span>
               </>
             ) : (
               <>
@@ -516,51 +518,55 @@ export const ParticipantRound: React.FC = () => {
 
           {/* Security Status */}
           <span
-            className={`badge text-[10px] ${
+            className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase border transition-all ${
               securityStatus === 'CLEAR'
-                ? 'badge-active'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-sm shadow-emerald-500/10'
                 : securityStatus === 'UNDER_REVIEW'
-                ? 'badge-pending animate-pulse'
-                : 'badge-danger'
+                ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 animate-pulse'
+                : 'bg-red-500/20 border-red-500/40 text-red-300'
             }`}
           >
-            {securityStatus === 'CLEAR' ? 'SECURE ARENA ACTIVE' : securityStatus === 'UNDER_REVIEW' ? 'LOCKED — UNDER REVIEW' : 'DISQUALIFIED'}
+            {securityStatus === 'CLEAR' ? '● SECURE ARENA' : securityStatus === 'UNDER_REVIEW' ? '⚠ LOCKED — UNDER REVIEW' : '✕ DISQUALIFIED'}
           </span>
         </div>
       </div>
 
       {/* MAIN SPLIT VIEW: Problem Spec vs Editor */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-800 overflow-hidden min-h-0">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/80 overflow-hidden min-h-0">
         {/* LEFT: Problem Statement Panel */}
-        <div className="overflow-y-auto p-6 md:p-8 space-y-6 bg-[#080d19]/90 text-slate-200">
+        <div className="overflow-y-auto p-6 md:p-8 space-y-6 bg-[#080d1a] text-slate-200">
           <div>
-            <div className="flex items-center gap-2 text-[10px] font-mono text-cyan-400 uppercase tracking-wider mb-1">
-              <span>PROBLEM SET {round?.round_number}</span>
+            <div className="flex items-center gap-2 text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-1.5">
+              <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">PROBLEM SET {round?.round_number}</span>
+              <span className="text-slate-500">•</span>
+              <span className="text-slate-400">MEMORY LIMIT: 128MB</span>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-3">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-3 font-heading tracking-tight">
               {problem?.title || 'Coding Problem'}
             </h1>
-            <div className="text-xs text-slate-300 whitespace-pre-line leading-relaxed font-sans">
+            <div className="text-xs text-slate-300 whitespace-pre-line leading-relaxed font-sans bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
               {problem?.statement}
             </div>
           </div>
 
           {/* Input Format */}
           <div>
-            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
               <span>Input Format</span>
             </h3>
-            <div className="text-xs text-slate-300 bg-slate-900/80 p-3.5 rounded-xl border border-slate-800/80 leading-relaxed font-mono">
+            <div className="text-xs text-slate-300 bg-slate-900/80 p-4 rounded-xl border border-slate-800 leading-relaxed font-mono shadow-inner">
               {problem?.input_format}
             </div>
           </div>
 
           {/* Output Format */}
           <div>
-            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
               <span>Output Format</span>
             </h3>
-            <div className="text-xs text-slate-300 bg-slate-900/80 p-3.5 rounded-xl border border-slate-800/80 leading-relaxed font-mono">
+            <div className="text-xs text-slate-300 bg-slate-900/80 p-4 rounded-xl border border-slate-800 leading-relaxed font-mono shadow-inner">
               {problem?.output_format}
             </div>
           </div>
@@ -568,10 +574,11 @@ export const ParticipantRound: React.FC = () => {
           {/* Constraints */}
           {problem?.constraints && (
             <div>
-              <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider mb-1.5">
-                Constraints
+              <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span>Constraints</span>
               </h3>
-              <div className="text-xs text-slate-300 bg-slate-900/80 p-3.5 rounded-xl border border-slate-800/80 font-mono whitespace-pre-line">
+              <div className="text-xs text-slate-300 bg-slate-900/80 p-4 rounded-xl border border-slate-800 font-mono whitespace-pre-line shadow-inner">
                 {problem.constraints}
               </div>
             </div>
@@ -580,28 +587,29 @@ export const ParticipantRound: React.FC = () => {
           {/* Examples */}
           {problem?.examples && problem.examples.length > 0 && (
             <div>
-              <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider mb-2.5">
-                Example Test Cases
+              <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span>Example Test Cases</span>
               </h3>
               <div className="space-y-3">
                 {problem.examples.map((ex, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-mono space-y-2"
+                    className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-mono space-y-3 shadow-md"
                   >
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800/60 pb-1.5">
-                      <span className="font-bold text-slate-300">Example {idx + 1}</span>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800/80 pb-2">
+                      <span className="font-bold text-cyan-300">Case #{idx + 1}</span>
                       {ex.explanation && (
-                        <span className="text-[10px] text-slate-400 italic font-sans">{ex.explanation}</span>
+                        <span className="text-[10px] text-slate-400 italic font-sans max-w-[70%] text-right">{ex.explanation}</span>
                       )}
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-500 uppercase block mb-0.5">Sample Input:</span>
-                      <pre className="p-2 rounded bg-black/40 text-cyan-300 overflow-x-auto whitespace-pre-wrap">{ex.input}</pre>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Input</span>
+                      <pre className="p-2.5 rounded-lg bg-black/60 text-cyan-300 overflow-x-auto whitespace-pre-wrap border border-slate-800/60">{ex.input}</pre>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-500 uppercase block mb-0.5">Expected Output:</span>
-                      <pre className="p-2 rounded bg-black/40 text-emerald-300 overflow-x-auto whitespace-pre-wrap">{ex.output}</pre>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Expected Output</span>
+                      <pre className="p-2.5 rounded-lg bg-black/60 text-emerald-300 overflow-x-auto whitespace-pre-wrap border border-slate-800/60">{ex.output}</pre>
                     </div>
                   </div>
                 ))}
@@ -613,15 +621,20 @@ export const ParticipantRound: React.FC = () => {
         {/* RIGHT: Monaco Editor & Console Container */}
         <div className="flex flex-col bg-[#0b1020] min-h-0 overflow-hidden relative">
           {/* Editor Header Bar */}
-          <div className="h-10 bg-slate-900/90 border-b border-slate-800 px-4 flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
-            <div className="flex items-center gap-2">
+          <div className="h-10 bg-[#090e1c] border-b border-slate-800 px-4 flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
+            <div className="flex items-center gap-2.5">
               <FileCode className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-slate-200 font-semibold">solution.c</span>
-              <span className="text-[10px] text-slate-500 font-mono">(C11 / GCC Sandbox)</span>
+              <span className="text-white font-bold tracking-wide">solution.c</span>
+              <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] text-slate-400 font-mono">GCC 12 • C11</span>
             </div>
 
             <div className="flex items-center gap-3 text-[11px]">
-              <span>Runs Remaining: <strong className={runsRemaining === 0 ? 'text-red-400' : 'text-cyan-300'}>{runsRemaining} of {maxRuns}</strong></span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-slate-400">Runs:</span>
+                <span className={`px-2 py-0.5 rounded-full font-bold ${runsRemaining === 0 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'}`}>
+                  {runsRemaining} / {maxRuns} LEFT
+                </span>
+              </span>
             </div>
           </div>
 
@@ -670,25 +683,25 @@ export const ParticipantRound: React.FC = () => {
             {isDrawerOpen && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 260, opacity: 1 }}
+                animate={{ height: 280, opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="bg-[#090d1a] border-t-2 border-cyan-500/40 flex flex-col shrink-0 overflow-hidden z-20 shadow-2xl shadow-cyan-950/60"
+                transition={{ duration: 0.25 }}
+                className="bg-[#050811]/95 backdrop-blur-xl border-t border-cyan-500/40 flex flex-col shrink-0 overflow-hidden z-20 shadow-2xl shadow-cyan-950/80"
               >
                 {/* Console Drawer Header */}
-                <div className="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
-                  <div className="flex items-center gap-2">
-                    <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-                    <span className="font-bold text-white">Execution Console</span>
+                <div className="px-5 py-2.5 bg-[#080d19] border-b border-slate-800/80 flex items-center justify-between text-xs font-mono">
+                  <div className="flex items-center gap-2.5">
+                    <Terminal className="w-4 h-4 text-cyan-400" />
+                    <span className="font-bold text-white tracking-wider">EXECUTION CONSOLE</span>
                     {runResult && (
                       <span
-                        className={`badge ${
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ml-2 ${
                           runResult.status === 'PASSED'
-                            ? 'badge-active'
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
                             : runResult.status === 'FAILED'
-                            ? 'badge-danger'
-                            : 'badge-pending'
-                        } text-[10px] ml-2`}
+                            ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                            : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                        }`}
                       >
                         {runResult.status}
                       </span>
@@ -697,74 +710,79 @@ export const ParticipantRound: React.FC = () => {
 
                   <button
                     onClick={() => setIsDrawerOpen(false)}
-                    className="p-1 text-slate-400 hover:text-white rounded"
+                    className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800/60 transition-colors"
                   >
                     <ChevronDown className="w-4 h-4" />
                   </button>
                 </div>
 
                 {/* Console Body */}
-                <div className="flex-1 p-4 overflow-y-auto space-y-3 font-mono text-xs">
+                <div className="flex-1 p-5 overflow-y-auto space-y-3 font-mono text-xs">
                   {isRunning ? (
-                    <div className="flex items-center gap-3 text-cyan-300 py-6 justify-center">
-                      <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-                      <span>Compiling and executing code in sandbox container...</span>
+                    <div className="flex flex-col items-center justify-center gap-3 text-cyan-300 py-10">
+                      <div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs tracking-wider">SPINNING UP ISOLATED DOCKER SANDBOX & RUNNING CODE...</span>
                     </div>
                   ) : runResult ? (
                     <div className="space-y-3">
                       {/* Summary Banner */}
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/80 border border-slate-800">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center justify-between p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 gap-2">
+                        <div className="flex items-center gap-2.5">
                           {runResult.status === 'PASSED' ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                           ) : (
-                            <XCircle className="w-4 h-4 text-red-400" />
+                            <XCircle className="w-5 h-5 text-red-400" />
                           )}
-                          <span className="font-bold text-slate-200">
+                          <span className="font-bold text-slate-100">
                             Passed {runResult.passedTestCases ?? runResult.passedTests ?? 0} / {runResult.totalTestCases ?? runResult.totalTests ?? 0} Public Test Cases
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-400">
-                          Execution Time: {runResult.executionTimeMs ?? Math.round((runResult.executionTime || 0) * 1000)} ms • Runs Left: {runResult.remainingRuns ?? runResult.runsRemaining ?? 0}
+                        <div className="text-[11px] text-slate-400 flex items-center gap-3">
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                            ⏱ {runResult.executionTimeMs ?? Math.round((runResult.executionTime || 0) * 1000)} ms
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">
+                            Runs: {runResult.remainingRuns ?? runResult.runsRemaining ?? 0} left
+                          </span>
                         </div>
                       </div>
 
                       {/* Compilation Error if any */}
                       {runResult.compilationError && (
-                        <div className="p-3 rounded-lg bg-red-950/60 border border-red-500/40 text-red-300 font-mono text-xs whitespace-pre-wrap">
-                          <span className="font-bold block mb-1">COMPILATION ERROR:</span>
+                        <div className="p-3.5 rounded-xl bg-red-950/60 border border-red-500/40 text-red-300 font-mono text-xs whitespace-pre-wrap">
+                          <span className="font-bold block mb-1 text-red-400">⚡ COMPILATION ERROR:</span>
                           {runResult.compilationError}
                         </div>
                       )}
 
                       {/* Individual Test Cases */}
                       {runResult.results && runResult.results.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                           {runResult.results.map((tr) => (
                             <div
                               key={tr.testCaseId}
-                              className={`p-3 rounded-lg border text-xs ${
+                              className={`p-3.5 rounded-xl border text-xs ${
                                 tr.passed
                                   ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
                                   : 'bg-red-950/20 border-red-500/30 text-red-200'
                               }`}
                             >
-                              <div className="flex items-center justify-between font-bold mb-1">
-                                <span>Test Case #{tr.testNumber}</span>
-                                <span>{tr.status}</span>
+                              <div className="flex items-center justify-between font-bold mb-1.5">
+                                <span className="font-mono">Test Case #{tr.testNumber}</span>
+                                <span className={`text-[10px] px-2 py-0.2 rounded-full ${tr.passed ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>{tr.status}</span>
                               </div>
                               {tr.input && (
-                                <div className="text-[10px] text-slate-400 truncate">
+                                <div className="text-[11px] text-slate-400 truncate">
                                   Input: <span className="text-slate-200">{tr.input}</span>
                                 </div>
                               )}
                               {tr.expectedOutput && (
-                                <div className="text-[10px] text-slate-400 truncate">
+                                <div className="text-[11px] text-slate-400 truncate">
                                   Expected: <span className="text-slate-200">{tr.expectedOutput}</span>
                                 </div>
                               )}
                               {tr.actualOutput !== undefined && (
-                                <div className="text-[10px] text-slate-400 truncate">
+                                <div className="text-[11px] text-slate-400 truncate">
                                   Output: <span className="text-slate-200">{tr.actualOutput}</span>
                                 </div>
                               )}
@@ -774,7 +792,7 @@ export const ParticipantRound: React.FC = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="text-slate-500 text-center py-6">
+                    <div className="text-slate-500 text-center py-8">
                       Click RUN to compile and evaluate code against sample public test cases.
                     </div>
                   )}
@@ -784,11 +802,11 @@ export const ParticipantRound: React.FC = () => {
           </AnimatePresence>
 
           {/* BOTTOM ACTION BAR */}
-          <div className="h-16 bg-[#080d19] border-t border-slate-800 px-6 flex items-center justify-between shrink-0 z-30 select-none">
+          <div className="h-16 bg-[#070b14]/95 backdrop-blur-md border-t border-slate-800/90 px-6 flex items-center justify-between shrink-0 z-30 select-none shadow-lg">
             {/* Console toggle button */}
             <button
               onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono transition-colors"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-xs font-mono transition-all"
             >
               <Terminal className="w-3.5 h-3.5 text-cyan-400" />
               <span>Console</span>
@@ -801,10 +819,10 @@ export const ParticipantRound: React.FC = () => {
               <button
                 disabled={isRunDisabled}
                 onClick={handleRun}
-                className={`btn text-xs font-mono px-4 py-2.5 transition-all ${
+                className={`text-xs font-mono px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
                   isRunDisabled
                     ? 'bg-slate-900 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
-                    : 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/40 shadow-md shadow-cyan-950/40'
+                    : 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/40 shadow-lg shadow-cyan-950/40 hover:scale-[1.02] active:scale-[0.98]'
                 }`}
                 title={runsRemaining === 0 ? 'Run limit of 5 exceeded' : 'Execute public tests'}
               >
@@ -815,9 +833,9 @@ export const ParticipantRound: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Play className="w-3.5 h-3.5 text-cyan-400" />
+                    <Play className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />
                     <span>
-                      RUN ({runsRemaining} / {maxRuns} LEFT)
+                      RUN ({runsRemaining}/{maxRuns})
                     </span>
                   </>
                 )}
@@ -827,7 +845,7 @@ export const ParticipantRound: React.FC = () => {
               <button
                 disabled={isSubmitting || isTimeExpired}
                 onClick={handleSubmitSolution}
-                className="btn btn-primary text-xs font-mono px-5 py-2.5"
+                className="btn btn-primary text-xs font-mono px-6 py-2.5 shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 title="Create immutable submission snapshot"
               >
                 {isSubmitting ? (

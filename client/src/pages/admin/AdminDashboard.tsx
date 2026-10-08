@@ -17,7 +17,13 @@ import {
   ArrowRight,
   Eye,
   RefreshCw,
-  Zap
+  Zap,
+  Activity,
+  Cpu,
+  Trophy,
+  Lock,
+  ChevronRight,
+  ShieldCheck
 } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 import api from '../../services/api';
@@ -54,7 +60,7 @@ export const AdminDashboard: React.FC = () => {
       const [statsRes, roundsRes, partRes] = await Promise.allSettled([
         api.get('/admin/dashboard/stats'),
         api.get('/admin/rounds'),
-        api.get('/admin/participants/live', { params: { limit: 6 } }),
+        api.get('/admin/participants/live', { params: { limit: 8 } }),
       ]);
 
       if (statsRes.status === 'fulfilled' && statsRes.value.data?.stats) {
@@ -128,37 +134,41 @@ export const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center p-12">
-        <div className="spinner" />
+      <div className="flex-1 flex flex-col items-center justify-center p-16">
+        <div className="spinner mb-4" />
+        <p className="text-purple-400 font-sans text-sm animate-pulse">Loading Mission Control Telemetry...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
-      {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-6 sm:p-10 space-y-8 max-w-7xl mx-auto w-full select-none">
+      {/* 1. Top Mission Control Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 pb-6 border-b border-white/5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-purple-400 mb-1">
-            <Radio className="w-4 h-4 animate-pulse" />
-            <span>CENTRAL EVENT CONTROL COMMAND</span>
+          <div className="flex items-center gap-2.5 text-xs text-purple-400 mb-1.5 font-medium">
+            <span className="p-1 rounded-md bg-purple-500/10 border border-purple-500/20">
+              <Radio className="w-3.5 h-3.5 animate-pulse text-purple-400" />
+            </span>
+            <span className="font-semibold uppercase tracking-wider">COMMAND CENTER OPERATIONS</span>
             <span className="text-slate-500">•</span>
-            <span className={isConnected ? 'text-emerald-400' : 'text-red-400'}>
+            <span className={isConnected ? 'text-emerald-400 flex items-center gap-1.5' : 'text-red-400'}>
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
               {isConnected ? 'LIVE TELEMETRY STREAMING' : 'OFFLINE'}
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
             Live Event Operations Center
           </h1>
-          <p className="text-xs text-slate-400 mt-1 font-mono">
-            Autonomous state tracking • Real-time telemetry • Instant anti-cheat arbitration
+          <p className="text-sm text-slate-400 mt-1 max-w-2xl font-sans">
+            Real-time participant tracking, round broadcasting, sandbox monitoring, and instant anti-cheat arbitration.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={fetchDashboardData}
-            className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+            className="btn btn-ghost text-xs p-3"
             title="Refresh Metrics"
           >
             <RefreshCw className="w-4 h-4" />
@@ -166,10 +176,10 @@ export const AdminDashboard: React.FC = () => {
 
           <Link
             to="/admin/security"
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold font-mono flex items-center gap-2 transition-all ${
+            className={`btn py-2.5 px-4 text-xs font-bold transition-all ${
               stats.pendingIncidents > 0
-                ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/30 animate-pulse'
-                : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800'
+                ? 'btn-danger animate-pulse shadow-lg shadow-red-900/40'
+                : 'btn-ghost'
             }`}
           >
             <ShieldAlert className="w-4 h-4" />
@@ -178,102 +188,136 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Primary Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Total Participants */}
+      {/* 2. Primary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Total Registered */}
         <div className="stat-card">
           <div className="flex items-center justify-between text-slate-400">
             <span className="stat-label">Total Registered</span>
-            <Users className="w-4 h-4 text-cyan-400" />
+            <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <Users className="w-5 h-5" />
+            </div>
           </div>
-          <span className="stat-value text-white">{stats.totalParticipants}</span>
-          <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            {stats.activeParticipants} Currently Connected
-          </span>
+          <div>
+            <span className="stat-value text-white">{stats.totalParticipants}</span>
+            <span className="text-xs text-slate-400 ml-1.5 font-sans">candidates</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-emerald-400 pt-2 border-t border-white/5 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>{stats.activeParticipants} Currently Connected</span>
+          </div>
         </div>
 
-        {/* Round 1 Active */}
+        {/* Round 1 Active Coders */}
         <div className="stat-card">
           <div className="flex items-center justify-between text-slate-400">
             <span className="stat-label">Round 1 (Palindrome)</span>
-            <Layers className="w-4 h-4 text-blue-400" />
+            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <Layers className="w-5 h-5" />
+            </div>
           </div>
-          <span className="stat-value text-cyan-300">{stats.round1Participants}</span>
-          <span className="text-[10px] font-mono text-slate-400">Active coding participants</span>
+          <div>
+            <span className="stat-value text-cyan-300">{stats.round1Participants}</span>
+            <span className="text-xs text-slate-400 ml-1.5 font-sans">active coders</span>
+          </div>
+          <div className="text-xs text-slate-400 pt-2 border-t border-white/5 font-sans">
+            Core algorithmic evaluation
+          </div>
         </div>
 
-        {/* Round 2 Active */}
+        {/* Round 2 Active Coders */}
         <div className="stat-card">
           <div className="flex items-center justify-between text-slate-400">
             <span className="stat-label">Round 2 (Pattern)</span>
-            <Layers className="w-4 h-4 text-purple-400" />
+            <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              <Layers className="w-5 h-5" />
+            </div>
           </div>
-          <span className="stat-value text-purple-300">{stats.round2Participants}</span>
-          <span className="text-[10px] font-mono text-slate-400">Advanced round sessions</span>
+          <div>
+            <span className="stat-value text-purple-300">{stats.round2Participants}</span>
+            <span className="text-xs text-slate-400 ml-1.5 font-sans">active coders</span>
+          </div>
+          <div className="text-xs text-slate-400 pt-2 border-t border-white/5 font-sans">
+            Matrix transformation round
+          </div>
         </div>
 
-        {/* Total Submissions */}
+        {/* Total Snapshots Submissions */}
         <div className="stat-card">
           <div className="flex items-center justify-between text-slate-400">
             <span className="stat-label">Total Submissions</span>
-            <Send className="w-4 h-4 text-emerald-400" />
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Send className="w-5 h-5" />
+            </div>
           </div>
-          <span className="stat-value text-emerald-300">{stats.totalSubmissions}</span>
-          <span className="text-[10px] font-mono text-slate-400">Immutable code snapshots</span>
+          <div>
+            <span className="stat-value text-emerald-300">{stats.totalSubmissions}</span>
+            <span className="text-xs text-slate-400 ml-1.5 font-sans">snapshots</span>
+          </div>
+          <div className="text-xs text-slate-400 pt-2 border-t border-white/5 font-sans">
+            Immutable database records
+          </div>
         </div>
       </div>
 
-      {/* Secondary Status Counts */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+      {/* 3. Secondary System Status Counters */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between shadow-md">
           <div>
-            <span className="text-[11px] font-mono text-slate-400 uppercase block">Under Review</span>
-            <span className="text-xl font-bold font-mono text-amber-400">{stats.underReview}</span>
+            <span className="text-xs text-slate-400 uppercase font-semibold block">Under Review</span>
+            <span className="text-2xl font-bold font-heading text-amber-400 mt-0.5 block">{stats.underReview}</span>
           </div>
-          <AlertTriangle className="w-6 h-6 text-amber-400/50" />
+          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between shadow-md">
           <div>
-            <span className="text-[11px] font-mono text-slate-400 uppercase block">Disqualified</span>
-            <span className="text-xl font-bold font-mono text-red-400">{stats.disqualified}</span>
+            <span className="text-xs text-slate-400 uppercase font-semibold block">Disqualified</span>
+            <span className="text-2xl font-bold font-heading text-red-400 mt-0.5 block">{stats.disqualified}</span>
           </div>
-          <XCircle className="w-6 h-6 text-red-400/50" />
+          <div className="p-2.5 rounded-xl bg-red-500/10 text-red-400">
+            <XCircle className="w-5 h-5" />
+          </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between shadow-md">
           <div>
-            <span className="text-[11px] font-mono text-slate-400 uppercase block">Completed</span>
-            <span className="text-xl font-bold font-mono text-emerald-400">{stats.completed}</span>
+            <span className="text-xs text-slate-400 uppercase font-semibold block">Completed</span>
+            <span className="text-2xl font-bold font-heading text-emerald-400 mt-0.5 block">{stats.completed}</span>
           </div>
-          <CheckCircle2 className="w-6 h-6 text-emerald-400/50" />
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between shadow-md">
           <div>
-            <span className="text-[11px] font-mono text-slate-400 uppercase block">Total Incidents</span>
-            <span className="text-xl font-bold font-mono text-red-300">{stats.securityIncidents}</span>
+            <span className="text-xs text-slate-400 uppercase font-semibold block">Total Incidents</span>
+            <span className="text-2xl font-bold font-heading text-red-300 mt-0.5 block">{stats.securityIncidents}</span>
           </div>
-          <ShieldAlert className="w-6 h-6 text-red-400/50" />
+          <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400">
+            <ShieldAlert className="w-5 h-5" />
+          </div>
         </div>
       </div>
 
-      {/* Live Event Round Controls */}
-      <div className="glass rounded-2xl p-6 border border-slate-800">
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+      {/* 4. Live Event Round Broadcast Controls */}
+      <div className="card-premium p-7 sm:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/5">
           <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2.5 font-heading">
               <Layers className="w-5 h-5 text-purple-400" />
-              <span>Event Round Control Panel</span>
+              <span>Event Round Broadcast Controls</span>
             </h2>
-            <p className="text-xs text-slate-400 font-mono">
-              Live broadcast controls with synchronized countdown timers across all participant screens.
+            <p className="text-sm text-slate-400 font-sans mt-0.5">
+              Live round orchestration with synchronized countdown timers across all participant screens.
             </p>
           </div>
           <Link
             to="/admin/rounds"
-            className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+            className="text-xs text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1 self-start sm:self-auto"
           >
             <span>CONFIGURE PROBLEM SETS</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -284,12 +328,12 @@ export const AdminDashboard: React.FC = () => {
           {rounds.map((round) => (
             <div
               key={round.id}
-              className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between"
+              className="p-6 rounded-2xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between shadow-lg"
             >
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-mono font-bold text-purple-400">
-                    ROUND {round.round_number}
+                <div className="flex items-center justify-between mb-3">
+                  <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold text-purple-300 bg-purple-950/60 border border-purple-800/60">
+                    ROUND 0{round.round_number}
                   </span>
                   <span
                     className={`badge ${
@@ -305,10 +349,10 @@ export const AdminDashboard: React.FC = () => {
                     {round.status}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white">{round.name}</h3>
-                <p className="text-xs text-slate-400 mt-1">{round.description}</p>
+                <h3 className="text-xl font-bold text-white font-heading">{round.name}</h3>
+                <p className="text-sm text-slate-300 mt-1 leading-relaxed">{round.description}</p>
 
-                <div className="mt-4 flex items-center gap-4 text-xs font-mono text-slate-400">
+                <div className="mt-4 flex items-center gap-4 text-xs text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-cyan-400" />
                     {round.duration_minutes} Mins Duration
@@ -319,7 +363,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center gap-2">
+              <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center gap-3">
                 {round.status === 'NOT_STARTED' && (
                   <button
                     disabled={actionLoading === round.id}
@@ -330,10 +374,10 @@ export const AdminDashboard: React.FC = () => {
                         action: 'start',
                       })
                     }
-                    className="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-emerald-900/20"
+                    className="flex-1 btn btn-success py-2.5 text-xs font-bold"
                   >
                     <Play className="w-3.5 h-3.5" />
-                    <span>ACTIVATE ROUND</span>
+                    <span>START & BROADCAST ROUND</span>
                   </button>
                 )}
 
@@ -348,7 +392,7 @@ export const AdminDashboard: React.FC = () => {
                           action: 'pause',
                         })
                       }
-                      className="flex-1 py-2 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                      className="flex-1 btn py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs"
                     >
                       <Pause className="w-3.5 h-3.5" />
                       <span>PAUSE ROUND</span>
@@ -362,7 +406,7 @@ export const AdminDashboard: React.FC = () => {
                           action: 'end',
                         })
                       }
-                      className="py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                      className="btn btn-danger py-2.5 px-4 text-xs font-bold"
                     >
                       <StopCircle className="w-3.5 h-3.5" />
                       <span>END ROUND</span>
@@ -381,7 +425,7 @@ export const AdminDashboard: React.FC = () => {
                           action: 'resume',
                         })
                       }
-                      className="flex-1 py-2 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                      className="flex-1 btn btn-primary py-2.5 text-xs font-bold"
                     >
                       <Play className="w-3.5 h-3.5" />
                       <span>RESUME ROUND</span>
@@ -395,7 +439,7 @@ export const AdminDashboard: React.FC = () => {
                           action: 'end',
                         })
                       }
-                      className="py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                      className="btn btn-danger py-2.5 px-4 text-xs font-bold"
                     >
                       <StopCircle className="w-3.5 h-3.5" />
                       <span>END ROUND</span>
@@ -404,8 +448,8 @@ export const AdminDashboard: React.FC = () => {
                 )}
 
                 {round.status === 'ENDED' && (
-                  <div className="w-full text-center py-2 text-xs font-mono text-slate-500">
-                    ROUND CONCLUDED • COMPLETED
+                  <div className="w-full text-center py-2.5 text-xs font-medium text-slate-400 bg-slate-900/60 rounded-xl border border-slate-800">
+                    ROUND CONCLUDED • FINALIZED
                   </div>
                 )}
               </div>
@@ -414,43 +458,43 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Two Column Grid: Activity Feed + Live Participant Status */}
+      {/* 5. Two-Column Live Surveillance & Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* Left: Real-Time Activity Feed */}
         <ActivityFeed maxItems={30} showFilters={true} />
 
         {/* Right: Live Participant Telemetry Snapshot */}
-        <div className="glass rounded-2xl p-5 border border-slate-800 flex flex-col h-full">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800/80">
-            <div className="flex items-center gap-2">
+        <div className="card-premium p-6 sm:p-7 flex flex-col h-full space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-white/5">
+            <div className="flex items-center gap-2.5">
               <Zap className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-sm font-bold text-white tracking-wide uppercase font-mono">
+              <h2 className="text-base font-bold text-white font-heading">
                 Live Participant Roster
               </h2>
             </div>
             <Link
               to="/admin/participants"
-              className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1"
             >
               <span>VIEW ALL</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="space-y-2 overflow-y-auto max-h-[380px] scrollbar-thin scrollbar-thumb-slate-800">
+          <div className="space-y-2.5 overflow-y-auto max-h-[380px] pr-1">
             {recentParticipants.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-500 font-mono">
-                No participant data available.
+              <div className="py-8 text-center text-xs text-slate-400 font-sans">
+                No participant telemetry available.
               </div>
             ) : (
               recentParticipants.map((p) => (
                 <div
                   key={p.id}
-                  className="p-3 rounded-xl bg-slate-900/70 border border-slate-800/80 flex items-center justify-between gap-3 text-xs hover:border-slate-700/80 transition-all"
+                  className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3 text-xs hover:border-slate-700 transition-all"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="relative">
-                      <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-cyan-300">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-cyan-300">
                         {p.display_name?.charAt(0) || 'P'}
                       </div>
                       <span
@@ -461,24 +505,24 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-200 truncate">
+                        <span className="font-semibold text-white truncate text-sm">
                           {p.display_name}
                         </span>
-                        <span className="font-mono text-[10px] text-cyan-400">
+                        <span className="font-mono text-xs text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">
                           {p.participant_id}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono block">
+                      <span className="text-xs text-slate-400 block mt-0.5">
                         {p.round_name || (p.active_round_number ? `Round ${p.active_round_number}` : 'Standby')}
                         {' • '}
-                        {p.total_score || 0} pts
+                        <strong className="text-emerald-400">{p.total_score || 0} pts</strong>
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2.5 shrink-0">
                     <span
-                      className={`badge text-[10px] ${
+                      className={`badge text-[11px] ${
                         p.status === 'CLEAR'
                           ? 'badge-active'
                           : p.status === 'UNDER_REVIEW'
@@ -492,10 +536,10 @@ export const AdminDashboard: React.FC = () => {
                     </span>
                     <Link
                       to={`/admin/participants/${p.id}`}
-                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
                       title="View Details"
                     >
-                      <Eye className="w-3.5 h-3.5" />
+                      <Eye className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
@@ -507,38 +551,38 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Round Action Confirmation Modal */}
       {confirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4">
+          <div className="card-premium p-7 max-w-md w-full shadow-2xl border-white/20">
+            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2 font-heading">
               <AlertTriangle className="w-5 h-5 text-amber-400" />
               <span>Confirm Round Action</span>
             </h3>
-            <p className="text-xs text-slate-300 mb-4 leading-relaxed font-mono">
+            <p className="text-xs text-slate-300 mb-5 leading-relaxed font-sans">
               Are you sure you want to{' '}
-              <strong className="text-white uppercase">{confirmModal.action}</strong>{' '}
-              <strong className="text-purple-400">{confirmModal.roundName}</strong>?
+              <strong className="text-white uppercase font-bold">{confirmModal.action}</strong>{' '}
+              <strong className="text-purple-400 font-bold">{confirmModal.roundName}</strong>?
               {confirmModal.action === 'start' &&
-                ' This will immediately broadcast to all participant consoles and start their timers.'}
+                ' This will broadcast immediately to all participant consoles and trigger countdown timers.'}
               {confirmModal.action === 'pause' &&
-                ' This will pause participant editors and freeze active timers.'}
+                ' This will temporarily pause participant editors and freeze active timers.'}
               {confirmModal.action === 'end' &&
-                ' This will conclude the round and lock further submissions.'}
+                ' This will conclude the round and lock further code submissions.'}
             </p>
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setConfirmModal(null)}
-                className="px-4 py-2 rounded-xl text-xs font-mono text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition-all cursor-pointer"
+                className="btn btn-ghost text-xs"
               >
                 CANCEL
               </button>
               <button
                 onClick={handleRoundActionConfirm}
-                className={`px-4 py-2 rounded-xl text-xs font-mono font-bold text-white transition-all cursor-pointer shadow-lg ${
+                className={`btn text-xs font-bold ${
                   confirmModal.action === 'end'
-                    ? 'bg-red-600 hover:bg-red-500 shadow-red-900/30'
+                    ? 'btn-danger'
                     : confirmModal.action === 'pause'
-                    ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-900/30'
-                    : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/30'
+                    ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                    : 'btn-success'
                 }`}
               >
                 CONFIRM {confirmModal.action.toUpperCase()}
