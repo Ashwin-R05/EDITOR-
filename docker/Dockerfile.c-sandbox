@@ -1,0 +1,17 @@
+# Isolated C Code Execution Sandbox
+FROM alpine:3.19
+
+# Install gcc, musl-dev, libc-dev, and coreutils (timeout, etc.)
+RUN apk add --no-cache gcc musl-dev coreutils
+
+# Create a restricted non-root user
+RUN adduser -D -u 10001 -s /bin/sh sandbox
+
+# Set working directory with proper permissions
+WORKDIR /sandbox
+RUN chown -R sandbox:sandbox /sandbox
+
+# Switch to non-root sandbox user
+USER sandbox
+
+CMD ["/bin/sh"]
