@@ -31,7 +31,7 @@ export type IncidentType = 'COPY_ATTEMPT' | 'PASTE_ATTEMPT' | 'CUT_ATTEMPT' | 'R
 
 export type IncidentStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 
-export type ExecutionStatus = 'PENDING' | 'COMPILING' | 'RUNNING' | 'PASSED' | 'FAILED' | 'COMPILATION_ERROR' | 'RUNTIME_ERROR' | 'TIME_LIMIT_EXCEEDED' | 'MEMORY_LIMIT_EXCEEDED';
+export type ExecutionStatus = 'PENDING' | 'COMPILING' | 'RUNNING' | 'PASSED' | 'FAILED' | 'WRONG_ANSWER' | 'PARTIALLY_PASSED' | 'COMPILATION_ERROR' | 'RUNTIME_ERROR' | 'TIME_LIMIT_EXCEEDED' | 'MEMORY_LIMIT_EXCEEDED' | 'OUTPUT_LIMIT_EXCEEDED' | 'SYSTEM_ERROR';
 
 export interface Round {
   id: string;
@@ -68,23 +68,29 @@ export interface TestCaseResult {
   actualOutput?: string;
   expectedOutput?: string;
   input?: string;
-  status: 'PASSED' | 'FAILED' | 'COMPILATION_ERROR' | 'RUNTIME_ERROR' | 'TIME_LIMIT_EXCEEDED';
+  status: 'PASSED' | 'FAILED' | 'WRONG_ANSWER' | 'RUNTIME_ERROR' | 'TIME_LIMIT_EXCEEDED' | 'MEMORY_LIMIT_EXCEEDED' | 'OUTPUT_LIMIT_EXCEEDED';
   executionTimeMs: number;
   errorMessage?: string;
 }
 
 export interface RunExecutionResponse {
-  status: 'PASSED' | 'FAILED' | 'COMPILATION_ERROR' | 'RUNTIME_ERROR' | 'TIME_LIMIT_EXCEEDED';
+  status: ExecutionStatus;
   compilationError?: string;
-  totalTestCases: number;
-  passedTestCases: number;
-  executionTimeMs: number;
+  totalTests: number;
+  passedTests: number;
+  executionTime: number;     // seconds
+  executionTimeMs: number;   // milliseconds
   results: TestCaseResult[];
-  runCount: number;
+  runNumber: number;
+  runsRemaining: number;
   maxRuns: number;
-  remainingRuns: number;
   runLimitReached: boolean;
   phase?: string;
+  // Legacy compat aliases
+  totalTestCases?: number;
+  passedTestCases?: number;
+  runCount?: number;
+  remainingRuns?: number;
 }
 
 export interface Example {
