@@ -119,10 +119,25 @@ export interface CodingSession {
   end_time: string | null;
 }
 
+export type SubmissionValidationStatus = 'PENDING' | 'PENDING_REVIEW' | 'VALIDATED' | 'REJECTED';
+
+export interface SubmissionReview {
+  id: string;
+  submission_id: string;
+  admin_id: string;
+  admin_name?: string;
+  action: 'VALIDATE' | 'REJECT' | 'REMARK';
+  previous_status?: string | null;
+  new_status?: string | null;
+  remark?: string | null;
+  created_at: string;
+}
+
 export interface Submission {
   id: string;
   participant_id: string;
   round_id: string;
+  session_id?: string;
   submission_number: number;
   source_code: string;
   language: string;
@@ -131,11 +146,23 @@ export interface Submission {
   test_cases_passed: number;
   total_test_cases: number;
   execution_status: ExecutionStatus;
+  execution_time_ms?: number;
   score: number;
-  validation_status: 'PENDING' | 'VALIDATED' | 'REJECTED';
-  admin_remarks: string | null;
+  validation_status: SubmissionValidationStatus;
+  admin_remarks?: string | null;
+  rejection_reason?: string | null;
+  validated_at?: string | null;
   round_name?: string;
   round_number?: number;
+  // Admin view extended fields
+  participant_name?: string;
+  participant_email?: string;
+  participant_code?: string;
+  participant_status?: ParticipantStatus;
+  college?: string;
+  department?: string;
+  year?: number;
+  validator_name?: string;
 }
 
 export interface SecurityIncident {

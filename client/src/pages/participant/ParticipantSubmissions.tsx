@@ -112,8 +112,9 @@ export const ParticipantSubmissions: React.FC = () => {
                   <th>Submitted At</th>
                   <th>Runs at Submit</th>
                   <th>Test Results</th>
-                  <th>Score</th>
                   <th>Execution</th>
+                  <th>Score</th>
+                  <th>Admin Validation</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -129,7 +130,7 @@ export const ParticipantSubmissions: React.FC = () => {
                       </div>
                     </td>
                     <td className="font-mono text-xs text-slate-300">
-                      Round {s.round_number}: {s.round_name}
+                      Round {s.round_number || 1}: {s.round_name || 'Coding Round'}
                     </td>
                     <td className="font-mono text-xs text-slate-400">
                       {new Date(s.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -142,9 +143,6 @@ export const ParticipantSubmissions: React.FC = () => {
                         {s.test_cases_passed} / {s.total_test_cases} Passed
                       </span>
                     </td>
-                    <td className="font-mono font-bold text-cyan-300 text-xs">
-                      {s.score} pts
-                    </td>
                     <td>
                       <span
                         className={`badge ${
@@ -152,10 +150,32 @@ export const ParticipantSubmissions: React.FC = () => {
                             ? 'badge-active'
                             : s.execution_status === 'FAILED'
                             ? 'badge-danger'
+                            : s.execution_status === 'PARTIALLY_PASSED'
+                            ? 'badge-warning'
                             : 'badge-pending'
                         } text-[10px]`}
                       >
                         {s.execution_status}
+                      </span>
+                    </td>
+                    <td className="font-mono font-bold text-cyan-300 text-xs">
+                      {s.score} pts
+                    </td>
+                    <td>
+                      <span
+                        className={`badge ${
+                          s.validation_status === 'VALIDATED'
+                            ? 'badge-active'
+                            : s.validation_status === 'REJECTED'
+                            ? 'badge-danger'
+                            : 'badge-pending'
+                        } text-[10px]`}
+                      >
+                        {s.validation_status === 'VALIDATED'
+                          ? 'VALIDATED'
+                          : s.validation_status === 'REJECTED'
+                          ? 'REJECTED'
+                          : 'PENDING REVIEW'}
                       </span>
                     </td>
                     <td>

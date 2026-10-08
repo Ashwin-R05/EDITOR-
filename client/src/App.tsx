@@ -15,6 +15,7 @@ import { Login } from './pages/Login';
 import { ParticipantDashboard } from './pages/participant/ParticipantDashboard';
 import { ParticipantRound } from './pages/participant/ParticipantRound';
 import { ParticipantSubmissions } from './pages/participant/ParticipantSubmissions';
+import { ParticipantSubmissionDetail } from './pages/participant/ParticipantSubmissionDetail';
 import { ParticipantResults } from './pages/participant/ParticipantResults';
 
 // Admin Pages
@@ -24,6 +25,7 @@ import { AdminParticipantDetail } from './pages/admin/AdminParticipantDetail';
 import { AdminRounds } from './pages/admin/AdminRounds';
 import { AdminProblems } from './pages/admin/AdminProblems';
 import { AdminSubmissions } from './pages/admin/AdminSubmissions';
+import { AdminSubmissionDetail } from './pages/admin/AdminSubmissionDetail';
 import { AdminSecurity } from './pages/admin/AdminSecurity';
 import { AdminSecurityDetail } from './pages/admin/AdminSecurityDetail';
 import { AdminLeaderboard } from './pages/admin/AdminLeaderboard';
@@ -51,6 +53,7 @@ export const App: React.FC = () => {
               <Route path="dashboard" element={<ParticipantDashboard />} />
               <Route path="round/:id" element={<ParticipantRound />} />
               <Route path="submissions" element={<ParticipantSubmissions />} />
+              <Route path="submissions/:id" element={<ParticipantSubmissionDetail />} />
               <Route path="results" element={<ParticipantResults />} />
             </Route>
 
@@ -70,6 +73,7 @@ export const App: React.FC = () => {
               <Route path="rounds" element={<AdminRounds />} />
               <Route path="problems" element={<AdminProblems />} />
               <Route path="submissions" element={<AdminSubmissions />} />
+              <Route path="submissions/:id" element={<AdminSubmissionDetail />} />
               <Route path="security" element={<AdminSecurity />} />
               <Route path="security/:id" element={<AdminSecurityDetail />} />
               <Route path="leaderboard" element={<AdminLeaderboard />} />

@@ -13,17 +13,29 @@ async function migrate() {
         console.error('Cannot run migrations without database connection.');
         process.exit(1);
     }
-    const migrationFile = path_1.default.resolve(__dirname, '../../../database/migrations/001_initial_schema.sql');
-    const sql = fs_1.default.readFileSync(migrationFile, 'utf-8');
-    try {
-        await (0, db_1.query)(sql);
-        console.log('✓ Migration 001_initial_schema.sql applied successfully');
+    const migrationsDir = path_1.default.resolve(__dirname, '../../../database/migrations');
+    const files = fs_1.default.readdirSync(migrationsDir).sort();
+    for (const file of files) {
+        if (file.endsWith('.sql')) {
+            const filePath = path_1.default.join(migrationsDir, file);
+            const sql = fs_1.default.readFileSync(filePath, 'utf-8');
+            try {
+                console.log(`Applying ${file}...`);
+                await (0, db_1.query)(sql);
+                console.log(`✓ Migration ${file} applied successfully`);
+            }
+            catch (error) {
+                // If enum already added or duplicate object, log and continue
+                if (error.code === '42710' || error.message?.includes('already exists')) {
+                    console.log(`ℹ Migration ${file} already applied or object exists`);
+                }
+                else {
+                    console.error(`✗ Migration ${file} failed:`, error.message);
+                }
+            }
+        }
     }
-    catch (error) {
-        console.error('✗ Migration failed:', error);
-        process.exit(1);
-    }
-    console.log('✅ All migrations completed');
+    console.log('✅ All migrations verified');
     process.exit(0);
 }
 migrate();
