@@ -108,6 +108,17 @@ async function seed() {
     );
     const problem1Id = problem1Result.rows[0].id;
 
+    // Helper function to generate pyramid pattern
+    const generatePyramid = (n: number): string => {
+      const lines: string[] = [];
+      for (let i = 1; i <= n; i++) {
+        const spaces = ' '.repeat(n - i);
+        const stars = '*'.repeat(2 * i - 1);
+        lines.push(spaces + stars);
+      }
+      return lines.join('\n');
+    };
+
     const problem2Result = await query(
       `INSERT INTO problems (round_id, title, statement, input_format, output_format, constraints, examples)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -117,14 +128,15 @@ async function seed() {
        RETURNING id`,
       [
         round2Id,
-        'Right Triangle Star Pattern',
-        'Write a C program to print a right-angled triangle star pattern.\n\nGiven an integer N, print a right-angled triangle pattern of stars (*) with N rows. The i-th row (1-indexed) should contain exactly i stars.',
+        'Pyramid Star Pattern',
+        'Write a C program to print a pyramid star pattern of height N.\n\nGiven an integer N, print a pyramid pattern of stars (*) with N rows. The i-th row (1-indexed) should contain (N - i) leading spaces followed by (2 * i - 1) stars (*). Do not print any trailing spaces after the stars on each row.',
         'A single integer N (1 ≤ N ≤ 20)',
-        'Print the right-angled triangle pattern with N rows, where the i-th row has i stars separated by spaces.',
+        'Print the pyramid star pattern with N rows where row i contains (N - i) spaces followed by (2 * i - 1) asterisks.',
         '1 ≤ N ≤ 20',
         JSON.stringify([
-          { input: '5', output: '*\n* *\n* * *\n* * * *\n* * * * *', explanation: 'A right triangle with 5 rows.' },
-          { input: '3', output: '*\n* *\n* * *', explanation: 'A right triangle with 3 rows.' }
+          { input: '5', output: generatePyramid(5), explanation: 'A pyramid star pattern with 5 rows.' },
+          { input: '3', output: generatePyramid(3), explanation: 'A pyramid star pattern with 3 rows.' },
+          { input: '1', output: generatePyramid(1), explanation: 'A single star for N = 1.' }
         ])
       ]
     );
@@ -145,26 +157,31 @@ async function seed() {
       await query(
         `INSERT INTO test_cases (problem_id, test_number, input, expected_output, case_type, points)
          VALUES ($1, $2, $3, $4, $5::test_case_type, $6)
-         ON CONFLICT (problem_id, test_number) DO NOTHING`,
+         ON CONFLICT (problem_id, test_number) DO UPDATE
+           SET input = EXCLUDED.input, expected_output = EXCLUDED.expected_output,
+               case_type = EXCLUDED.case_type, points = EXCLUDED.points`,
         [problem1Id, tc.num, tc.input, tc.output, tc.type, tc.type === 'PUBLIC' ? 10 : 20]
       );
     }
 
-    // 6. Create test cases for Problem 2 (Pattern)
+    // 6. Create test cases for Problem 2 (Pyramid Pattern)
     const testCases2 = [
-      { num: 1, input: '5', output: '*\n* *\n* * *\n* * * *\n* * * * *', type: 'PUBLIC' },
-      { num: 2, input: '3', output: '*\n* *\n* * *', type: 'PUBLIC' },
-      { num: 3, input: '1', output: '*', type: 'PUBLIC' },
-      { num: 4, input: '7', output: '*\n* *\n* * *\n* * * *\n* * * * *\n* * * * * *\n* * * * * * *', type: 'HIDDEN' },
-      { num: 5, input: '10', output: '*\n* *\n* * *\n* * * *\n* * * * *\n* * * * * *\n* * * * * * *\n* * * * * * * *\n* * * * * * * * *\n* * * * * * * * * *', type: 'HIDDEN' },
-      { num: 6, input: '2', output: '*\n* *', type: 'HIDDEN' },
+      { num: 1, input: '5', output: generatePyramid(5), type: 'PUBLIC' },
+      { num: 2, input: '3', output: generatePyramid(3), type: 'PUBLIC' },
+      { num: 3, input: '1', output: generatePyramid(1), type: 'PUBLIC' },
+      { num: 4, input: '2', output: generatePyramid(2), type: 'HIDDEN' },
+      { num: 5, input: '4', output: generatePyramid(4), type: 'HIDDEN' },
+      { num: 6, input: '6', output: generatePyramid(6), type: 'HIDDEN' },
+      { num: 7, input: '7', output: generatePyramid(7), type: 'HIDDEN' },
     ];
 
     for (const tc of testCases2) {
       await query(
         `INSERT INTO test_cases (problem_id, test_number, input, expected_output, case_type, points)
          VALUES ($1, $2, $3, $4, $5::test_case_type, $6)
-         ON CONFLICT (problem_id, test_number) DO NOTHING`,
+         ON CONFLICT (problem_id, test_number) DO UPDATE
+           SET input = EXCLUDED.input, expected_output = EXCLUDED.expected_output,
+               case_type = EXCLUDED.case_type, points = EXCLUDED.points`,
         [problem2Id, tc.num, tc.input, tc.output, tc.type, tc.type === 'PUBLIC' ? 10 : 20]
       );
     }
