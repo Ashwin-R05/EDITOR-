@@ -13,7 +13,7 @@ const zod_1 = require("zod");
 const config_1 = require("../config");
 const db_1 = require("../models/db");
 exports.loginSchema = zod_1.z.object({
-    email: zod_1.z.string().email('Invalid email format'),
+    email: zod_1.z.string().min(1, 'Email or username is required'),
     password: zod_1.z.string().min(1, 'Password is required'),
 });
 exports.registerParticipantSchema = zod_1.z.object({
@@ -29,7 +29,14 @@ exports.registerParticipantSchema = zod_1.z.object({
 async function login(req, res) {
     const { email, password } = req.body;
     try {
-        const result = await (0, db_1.query)('SELECT id, email, password_hash, role, display_name, is_active FROM users WHERE email = $1', [email]);
+        const trimmedInput = email.trim();
+        const result = await (0, db_1.query)(`SELECT u.id, u.email, u.password_hash, u.role, u.display_name, u.is_active 
+       FROM users u
+       LEFT JOIN participants p ON p.user_id = u.id
+       WHERE LOWER(u.email) = LOWER($1) 
+          OR LOWER(u.display_name) = LOWER($1) 
+          OR LOWER(p.participant_id) = LOWER($1)
+       LIMIT 1`, [trimmedInput]);
         if (result.rows.length === 0) {
             res.status(401).json({ error: 'Invalid credentials' });
             return;

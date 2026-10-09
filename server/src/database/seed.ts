@@ -24,27 +24,41 @@ async function seed() {
     console.log('✓ Admin user created:', adminId);
 
     // 2. Create sample participants
-    const participantPassword = await bcrypt.hash('pass123', 12);
     const participants = [
-      { email: 'ashwin@techauction.com', name: 'Ashwin', pid: 'P001', college: 'MIT', dept: 'CSE', year: 3 },
-      { email: 'priya@techauction.com', name: 'Priya', pid: 'P002', college: 'MIT', dept: 'IT', year: 2 },
-      { email: 'rahul@techauction.com', name: 'Rahul', pid: 'P003', college: 'MIT', dept: 'CSE', year: 3 },
-      { email: 'maya@techauction.com', name: 'Maya', pid: 'P004', college: 'MIT', dept: 'ECE', year: 4 },
-      { email: 'arjun@techauction.com', name: 'Arjun', pid: 'P005', college: 'MIT', dept: 'CSE', year: 2 },
+      { email: 'ashwin@techauction.com', name: 'Ashwin', pid: 'P001', college: 'MIT', dept: 'CSE', year: 3, pass: 'pass123' },
+      { email: 'priya@techauction.com', name: 'Priya', pid: 'P002', college: 'MIT', dept: 'IT', year: 2, pass: 'pass123' },
+      { email: 'rahul@techauction.com', name: 'Rahul', pid: 'P003', college: 'MIT', dept: 'CSE', year: 3, pass: 'pass123' },
+      { email: 'maya@techauction.com', name: 'Maya', pid: 'P004', college: 'MIT', dept: 'ECE', year: 4, pass: 'pass123' },
+      { email: 'arjun@techauction.com', name: 'Arjun', pid: 'P005', college: 'MIT', dept: 'CSE', year: 2, pass: 'pass123' },
     ];
 
+    // Add 15 standardized participants user01 through user15
+    for (let i = 1; i <= 15; i++) {
+      const num = String(i).padStart(2, '0');
+      participants.push({
+        email: `user${num}@techauction.com`,
+        name: `user${num}`,
+        pid: `user${num}`,
+        college: 'Tech Institute',
+        dept: ['CSE', 'IT', 'AI & DS', 'ECE', 'Cybersecurity'][(i - 1) % 5],
+        year: ((i - 1) % 4) + 1,
+        pass: `user${num}@123`,
+      });
+    }
+
     for (const p of participants) {
+      const hashedPass = await bcrypt.hash(p.pass, 12);
       const userResult = await query(
         `INSERT INTO users (email, password_hash, role, display_name)
          VALUES ($1, $2, 'PARTICIPANT', $3)
-         ON CONFLICT (email) DO UPDATE SET password_hash = $2
+         ON CONFLICT (email) DO UPDATE SET password_hash = $2, display_name = $3
          RETURNING id`,
-        [p.email, participantPassword, p.name]
+        [p.email, hashedPass, p.name]
       );
       await query(
         `INSERT INTO participants (user_id, participant_id, college, department, year)
          VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (participant_id) DO NOTHING`,
+         ON CONFLICT (participant_id) DO UPDATE SET user_id = $1, college = $3, department = $4, year = $5`,
         [userResult.rows[0].id, p.pid, p.college, p.dept, p.year]
       );
       console.log(`✓ Participant ${p.name} (${p.pid}) created`);

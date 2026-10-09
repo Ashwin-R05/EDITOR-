@@ -7,7 +7,7 @@ import { query } from '../models/db';
 import { AuthRequest } from '../middleware/auth';
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
+  email: z.string().min(1, 'Email or username is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -26,9 +26,16 @@ export async function login(req: AuthRequest, res: Response): Promise<void> {
   const { email, password } = req.body;
 
   try {
+    const trimmedInput = email.trim();
     const result = await query(
-      'SELECT id, email, password_hash, role, display_name, is_active FROM users WHERE email = $1',
-      [email]
+      `SELECT u.id, u.email, u.password_hash, u.role, u.display_name, u.is_active 
+       FROM users u
+       LEFT JOIN participants p ON p.user_id = u.id
+       WHERE LOWER(u.email) = LOWER($1) 
+          OR LOWER(u.display_name) = LOWER($1) 
+          OR LOWER(p.participant_id) = LOWER($1)
+       LIMIT 1`,
+      [trimmedInput]
     );
 
     if (result.rows.length === 0) {

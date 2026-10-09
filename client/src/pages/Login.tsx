@@ -43,8 +43,8 @@ export const Login: React.FC = () => {
     setActiveTab(role);
     setError(null);
     if (role === 'PARTICIPANT') {
-      setEmail('ashwin@techauction.com');
-      setPassword('pass123');
+      setEmail('user01');
+      setPassword('user01@123');
     } else {
       setEmail('admin@techauction.com');
       setPassword('admin123');
@@ -161,18 +161,18 @@ export const Login: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-slate-300 mb-1.5 font-semibold">
-                  {activeTab === 'PARTICIPANT' ? 'Participant Email' : 'Admin Email'}
+                  {activeTab === 'PARTICIPANT' ? 'Username or Email' : 'Admin Email'}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                     <Mail className="w-4 h-4" />
                   </div>
                   <input
-                    type="email"
+                    type="text"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder={activeTab === 'PARTICIPANT' ? 'ashwin@techauction.com' : 'admin@techauction.com'}
+                    placeholder={activeTab === 'PARTICIPANT' ? 'user01 or user01@techauction.com' : 'admin@techauction.com'}
                     className={`w-full pl-10 pr-4 py-3 bg-slate-900/90 border rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition-all font-mono ${
                       activeTab === 'PARTICIPANT'
                         ? 'border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50'
