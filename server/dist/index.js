@@ -15,45 +15,58 @@ const auth_1 = __importDefault(require("./routes/auth"));
 const participant_1 = __importDefault(require("./routes/participant"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const coding_1 = __importDefault(require("./routes/coding"));
+const security_1 = __importDefault(require("./routes/security"));
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
 // Security middleware
 app.use((0, helmet_1.default)({
-    contentSecurityPolicy: false, // Allow for dev
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
 }));
-app.use((0, cors_1.default)({
-    origin: config_1.config.clientUrl,
+// CORS configuration supporting single or multiple origins
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow non-browser requests (e.g. mobile, curl, server-to-server)
+        if (!origin)
+            return callback(null, true);
+        if (config_1.config.clientUrls.includes('*') || config_1.config.clientUrls.includes(origin)) {
+            return callback(null, true);
+        }
+        // In development mode, allow localhost origins
+        if (config_1.config.nodeEnv === 'development' && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+            return callback(null, true);
+        }
+        return callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+};
+app.use((0, cors_1.default)(corsOptions));
 // Rate limiting
 const limiter = (0, express_rate_limit_1.default)({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 500, // generous for dev
+    windowMs: 15 * 60 * 1000,
+    max: 1000,
     standardHeaders: true,
     legacyHeaders: false,
 });
 app.use(limiter);
 const authLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
-    max: 20,
-    message: { error: 'Too many login attempts. Please try again later.' },
+    max: 30,
+    message: { error: 'Too many authentication attempts. Please try again later.' },
 });
 app.use('/api/auth/login', authLimiter);
 // Body parsing
 app.use(express_1.default.json({ limit: '1mb' }));
 app.use(express_1.default.urlencoded({ extended: true }));
-// Health check
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-    });
+// Standard production health checks
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
 });
-const security_1 = __importDefault(require("./routes/security"));
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
 // API routes
 app.use('/api/auth', auth_1.default);
 app.use('/api/admin', admin_1.default);
@@ -64,9 +77,9 @@ app.use('/api', coding_1.default);
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
-// Error handler
+// Error handler (never exposes stack traces in production)
 app.use((err, req, res, next) => {
-    console.error('Unhandled error:', err);
+    console.error('Unhandled server error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
 });
 // Initialize Socket.IO
@@ -80,9 +93,9 @@ async function start() {
     console.log('');
     await (0, db_1.testConnection)();
     httpServer.listen(config_1.config.port, () => {
-        console.log(`🚀 Server running on http://localhost:${config_1.config.port}`);
-        console.log(`📡 Socket.IO ready`);
-        console.log(`🌐 CORS origin: ${config_1.config.clientUrl}`);
+        console.log(`🚀 Server listening on port ${config_1.config.port} (env: ${config_1.config.nodeEnv})`);
+        console.log(`📡 WebSocket server initialized`);
+        console.log(`🌐 Allowed CORS origins: ${config_1.config.clientUrls.join(', ')}`);
         console.log('');
     });
 }

@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// Central production API configuration using VITE_API_URL with /api fallback
+const baseURL = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },

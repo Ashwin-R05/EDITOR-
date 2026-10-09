@@ -1,4 +1,4 @@
-# Client Dependencies
+# Server Dependencies
 node_modules/
 
 # Environment files
@@ -10,7 +10,6 @@ node_modules/
 
 # Build output
 dist/
-dist-ssr/
 *.tsbuildinfo
 
 # Logs
@@ -18,8 +17,7 @@ logs/
 *.log
 npm-debug.log*
 
-# Editor / OS
+# OS / IDE
 .DS_Store
 .idea/
-.vscode/*
-!.vscode/extensions.json
+.vscode/

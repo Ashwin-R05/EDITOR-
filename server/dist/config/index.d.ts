@@ -2,6 +2,8 @@ export declare const config: {
     port: number;
     nodeEnv: string;
     db: {
+        url: string | undefined;
+        ssl: boolean;
         host: string;
         port: number;
         name: string;
@@ -13,8 +15,11 @@ export declare const config: {
         expiresIn: string;
     };
     clientUrl: string;
+    clientUrls: string[];
     execution: {
         dockerEnabled: boolean;
+        serviceUrl: string | undefined;
+        serviceToken: string | undefined;
         timeout: number;
         memoryLimit: string;
         cpuLimit: string;

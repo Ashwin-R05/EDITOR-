@@ -155,7 +155,7 @@ export const AdminLayout: React.FC = () => {
               {isConnected ? 'NODE ONLINE' : 'DISCONNECTED'}
             </span>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">PORT 3001</span>
+          <span className="text-[10px] text-cyan-400 font-mono font-medium">TELEMETRY</span>
         </div>
 
         {/* Navigation Items */}

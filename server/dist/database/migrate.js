@@ -13,7 +13,21 @@ async function migrate() {
         console.error('Cannot run migrations without database connection.');
         process.exit(1);
     }
-    const migrationsDir = path_1.default.resolve(__dirname, '../../../database/migrations');
+    // Look for migrations in multiple possible deployment locations
+    const candidateDirs = [
+        process.env.MIGRATIONS_DIR,
+        path_1.default.resolve(__dirname, '../../../database/migrations'),
+        path_1.default.resolve(__dirname, '../../database/migrations'),
+        path_1.default.resolve(process.cwd(), '../database/migrations'),
+        path_1.default.resolve(process.cwd(), 'database/migrations'),
+        path_1.default.resolve(process.cwd(), 'migrations'),
+    ].filter(Boolean);
+    const migrationsDir = candidateDirs.find((dir) => fs_1.default.existsSync(dir));
+    if (!migrationsDir) {
+        console.error('✗ Migration directory not found. Candidates checked:', candidateDirs);
+        process.exit(1);
+    }
+    console.log(`📁 Applying migrations from: ${migrationsDir}`);
     const files = fs_1.default.readdirSync(migrationsDir).sort();
     for (const file of files) {
         if (file.endsWith('.sql')) {
@@ -35,8 +49,11 @@ async function migrate() {
             }
         }
     }
-    console.log('✅ All migrations verified');
+    console.log('✅ All migrations verified successfully');
     process.exit(0);
 }
-migrate();
+migrate().catch((err) => {
+    console.error('Migration process failed:', err);
+    process.exit(1);
+});
 //# sourceMappingURL=migrate.js.map

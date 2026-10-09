@@ -11,7 +11,24 @@ async function migrate() {
     process.exit(1);
   }
 
-  const migrationsDir = path.resolve(__dirname, '../../../database/migrations');
+  // Look for migrations in multiple possible deployment locations
+  const candidateDirs = [
+    process.env.MIGRATIONS_DIR,
+    path.resolve(__dirname, '../../../database/migrations'),
+    path.resolve(__dirname, '../../database/migrations'),
+    path.resolve(process.cwd(), '../database/migrations'),
+    path.resolve(process.cwd(), 'database/migrations'),
+    path.resolve(process.cwd(), 'migrations'),
+  ].filter(Boolean) as string[];
+
+  const migrationsDir = candidateDirs.find((dir) => fs.existsSync(dir));
+
+  if (!migrationsDir) {
+    console.error('✗ Migration directory not found. Candidates checked:', candidateDirs);
+    process.exit(1);
+  }
+
+  console.log(`📁 Applying migrations from: ${migrationsDir}`);
   const files = fs.readdirSync(migrationsDir).sort();
 
   for (const file of files) {
@@ -33,8 +50,11 @@ async function migrate() {
     }
   }
 
-  console.log('✅ All migrations verified');
+  console.log('✅ All migrations verified successfully');
   process.exit(0);
 }
 
-migrate();
+migrate().catch((err) => {
+  console.error('Migration process failed:', err);
+  process.exit(1);
+});

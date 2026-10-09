@@ -5,16 +5,28 @@ exports.getClient = getClient;
 exports.testConnection = testConnection;
 const pg_1 = require("pg");
 const config_1 = require("../config");
-const pool = new pg_1.Pool({
-    host: config_1.config.db.host,
-    port: config_1.config.db.port,
-    database: config_1.config.db.name,
-    user: config_1.config.db.user,
-    password: config_1.config.db.password,
+const poolConfig = {
     max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
-});
+    connectionTimeoutMillis: 10000,
+};
+if (config_1.config.db.url) {
+    poolConfig.connectionString = config_1.config.db.url;
+    if (config_1.config.db.ssl) {
+        poolConfig.ssl = { rejectUnauthorized: false };
+    }
+}
+else {
+    poolConfig.host = config_1.config.db.host;
+    poolConfig.port = config_1.config.db.port;
+    poolConfig.database = config_1.config.db.name;
+    poolConfig.user = config_1.config.db.user;
+    poolConfig.password = config_1.config.db.password;
+    if (config_1.config.db.ssl) {
+        poolConfig.ssl = { rejectUnauthorized: false };
+    }
+}
+const pool = new pg_1.Pool(poolConfig);
 pool.on('error', (err) => {
     console.error('Unexpected database pool error:', err);
 });
@@ -38,7 +50,7 @@ async function testConnection() {
         return true;
     }
     catch (error) {
-        console.error('✗ Database connection failed:', error);
+        console.error('✗ Database connection failed:', error.message || error);
         return false;
     }
 }

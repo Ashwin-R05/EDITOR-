@@ -5,11 +5,11 @@ export declare const loginSchema: z.ZodObject<{
     email: z.ZodString;
     password: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    password: string;
     email: string;
+    password: string;
 }, {
-    password: string;
     email: string;
+    password: string;
 }>;
 export declare const registerParticipantSchema: z.ZodObject<{
     email: z.ZodString;
@@ -21,8 +21,8 @@ export declare const registerParticipantSchema: z.ZodObject<{
     year: z.ZodOptional<z.ZodNumber>;
     phone: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    password: string;
     email: string;
+    password: string;
     displayName: string;
     participantId: string;
     college?: string | undefined;
@@ -30,8 +30,8 @@ export declare const registerParticipantSchema: z.ZodObject<{
     year?: number | undefined;
     phone?: string | undefined;
 }, {
-    password: string;
     email: string;
+    password: string;
     displayName: string;
     participantId: string;
     college?: string | undefined;

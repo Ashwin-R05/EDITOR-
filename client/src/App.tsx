@@ -77,7 +77,9 @@ export const App: React.FC = () => {
               <Route path="security" element={<AdminSecurity />} />
               <Route path="security/:id" element={<AdminSecurityDetail />} />
               <Route path="leaderboard" element={<AdminLeaderboard />} />
+              <Route path="scores" element={<Navigate to="/admin/leaderboard" replace />} />
               <Route path="audit-logs" element={<AdminAuditLogs />} />
+              <Route path="settings" element={<Navigate to="/admin/dashboard" replace />} />
             </Route>
 
             {/* Default redirect to login */}

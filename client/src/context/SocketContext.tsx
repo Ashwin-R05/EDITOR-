@@ -12,6 +12,22 @@ const SocketContext = createContext<SocketContextType>({
   isConnected: false,
 });
 
+function getSocketUrl(): string | undefined {
+  if (import.meta.env.VITE_SOCKET_URL) {
+    return import.meta.env.VITE_SOCKET_URL;
+  }
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl && (apiUrl.startsWith('http://') || apiUrl.startsWith('https://'))) {
+    try {
+      const url = new URL(apiUrl);
+      return url.origin;
+    } catch {
+      // fallback
+    }
+  }
+  return undefined;
+}
+
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isAuthenticated } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -27,12 +43,22 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    const socketInstance = io({
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-    });
+    const socketUrl = getSocketUrl();
+    const socketInstance = socketUrl
+      ? io(socketUrl, {
+          auth: { token },
+          transports: ['websocket', 'polling'],
+          reconnectionAttempts: 15,
+          reconnectionDelay: 1000,
+          timeout: 20000,
+        })
+      : io({
+          auth: { token },
+          transports: ['websocket', 'polling'],
+          reconnectionAttempts: 15,
+          reconnectionDelay: 1000,
+          timeout: 20000,
+        });
 
     socketInstance.on('connect', () => {
       console.log('⚡ Socket connected:', socketInstance.id);

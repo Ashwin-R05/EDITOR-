@@ -10,7 +10,16 @@ let io: SocketIOServer;
 export function initializeWebSocket(httpServer: HttpServer): SocketIOServer {
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: config.clientUrl,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (config.clientUrls.includes('*') || config.clientUrls.includes(origin)) {
+          return callback(null, true);
+        }
+        if (config.nodeEnv === 'development' && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+          return callback(null, true);
+        }
+        return callback(new Error(`Origin ${origin} not allowed by WebSocket CORS`), false);
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     },

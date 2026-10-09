@@ -10,27 +10,42 @@ import authRoutes from './routes/auth';
 import participantRoutes from './routes/participant';
 import adminRoutes from './routes/admin';
 import codingRoutes from './routes/coding';
+import securityRoutes from './routes/security';
 
 const app = express();
 const httpServer = createServer(app);
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Allow for dev
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
 
-app.use(cors({
-  origin: config.clientUrl,
+// CORS configuration supporting single or multiple origins
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g. mobile, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (config.clientUrls.includes('*') || config.clientUrls.includes(origin)) {
+      return callback(null, true);
+    }
+    // In development mode, allow localhost origins
+    if (config.nodeEnv === 'development' && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // generous for dev
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -38,8 +53,8 @@ app.use(limiter);
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { error: 'Too many login attempts. Please try again later.' },
+  max: 30,
+  message: { error: 'Too many authentication attempts. Please try again later.' },
 });
 app.use('/api/auth/login', authLimiter);
 
@@ -47,16 +62,14 @@ app.use('/api/auth/login', authLimiter);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
+// Standard production health checks
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
-import securityRoutes from './routes/security';
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // API routes
 app.use('/api/auth', authRoutes);
@@ -70,9 +83,9 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Error handler
+// Error handler (never exposes stack traces in production)
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
+  console.error('Unhandled server error:', err.message);
   res.status(500).json({ error: 'Internal server error' });
 });
 
@@ -90,9 +103,9 @@ async function start() {
   await testConnection();
 
   httpServer.listen(config.port, () => {
-    console.log(`🚀 Server running on http://localhost:${config.port}`);
-    console.log(`📡 Socket.IO ready`);
-    console.log(`🌐 CORS origin: ${config.clientUrl}`);
+    console.log(`🚀 Server listening on port ${config.port} (env: ${config.nodeEnv})`);
+    console.log(`📡 WebSocket server initialized`);
+    console.log(`🌐 Allowed CORS origins: ${config.clientUrls.join(', ')}`);
     console.log('');
   });
 }

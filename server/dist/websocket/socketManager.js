@@ -18,7 +18,17 @@ let io;
 function initializeWebSocket(httpServer) {
     io = new socket_io_1.Server(httpServer, {
         cors: {
-            origin: config_1.config.clientUrl,
+            origin: (origin, callback) => {
+                if (!origin)
+                    return callback(null, true);
+                if (config_1.config.clientUrls.includes('*') || config_1.config.clientUrls.includes(origin)) {
+                    return callback(null, true);
+                }
+                if (config_1.config.nodeEnv === 'development' && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+                    return callback(null, true);
+                }
+                return callback(new Error(`Origin ${origin} not allowed by WebSocket CORS`), false);
+            },
             methods: ['GET', 'POST'],
             credentials: true,
         },
