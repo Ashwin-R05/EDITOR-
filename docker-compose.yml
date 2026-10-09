@@ -1,0 +1,72 @@
+services:
+  # 1. C Code Execution Sandbox Base Image
+  c-runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.c-sandbox
+    image: tech-auction-c-runner:latest
+    command: ["echo", "C Runner sandbox image built successfully"]
+
+  # 2. PostgreSQL 16 Database
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tech_auction
+    volumes:
+      - tech_auction_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tech_auction"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 3. Node.js + Express + Socket.IO Backend
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: tech_auction
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: tech-auction-jwt-secret-production-2024
+      JWT_EXPIRES_IN: 24h
+      CLIENT_URL: "*"
+      DOCKER_ENABLED: "true"
+      MIGRATIONS_DIR: /app/database/migrations
+    volumes:
+      # Allow backend to spawn docker containers in sandbox
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/tech-auction-sandbox:/tmp/tech-auction-sandbox
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+      c-runner:
+        condition: service_completed_successfully
+
+  # 4. Frontend SPA served via Nginx Reverse Proxy
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "3000:80"
+    depends_on:
+      - server
+
+volumes:
+  tech_auction_pgdata:
